@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import { TildaManifest } from '../models';
+import {
+  EmailParams,
+  EmailRecipient,
+  Field,
+  Hook,
+  TildaManifest,
+} from '../models';
 import { AxiosResponse } from 'axios';
 import { ManifestRequest } from './models/manifest-request.model';
 import { CustomException, ExceptionType } from './exceptions';
+import { encrypt } from '../utils/crypto-helpers';
 
 @Injectable()
 export class ManifestService {
@@ -50,4 +57,40 @@ export class ManifestService {
       }
     }
   }
+
+  encryptManifestEmailRecipients = (
+    emailRecipients: EmailRecipient[],
+    secret: string,
+  ): void => {
+    emailRecipients.forEach((recipient) => {
+      recipient['email:enc'] = encrypt(recipient['email:enc'], secret);
+    });
+  };
+
+  encryptFieldConstValues = (field: Field, secret: string): void => {
+    Object.keys(field.const).forEach((constKey: string) => {
+      const constValue = field.const[constKey];
+      if (constKey.endsWith(':enc')) {
+        field.const[constKey] = encrypt(constValue, secret);
+      }
+    });
+  };
+
+  encryptManifestEncFields = (
+    manifest: TildaManifest,
+    secret: string,
+  ): TildaManifest => {
+    manifest.data.hooks.post.forEach((hook: Hook) => {
+      if (hook.factory === 'email') {
+        const emailParams: EmailParams = hook.params as EmailParams;
+        this.encryptManifestEmailRecipients(emailParams.recipients, secret);
+      }
+    });
+
+    Object.values(manifest.data.fields).forEach((field: Field) => {
+      this.encryptFieldConstValues(field, secret);
+    });
+
+    return manifest;
+  };
 }

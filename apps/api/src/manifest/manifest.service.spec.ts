@@ -69,7 +69,7 @@ describe('ManifestService', () => {
         ],
       },
     },
-  };
+  } as TildaManifest;
 
   beforeEach(() => {
     httpServiceMock = {
@@ -207,5 +207,42 @@ describe('ManifestService', () => {
     await expect(
       manifestService.getManifestFromBase64(invalidBase64Content),
     ).rejects.toThrow(new CustomException(ExceptionType.errorDecodingBase64));
+  });
+
+  describe('Encryption Functions', () => {
+    const secretKey =
+      'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
+
+    it('should encrypt email recipients in manifest', () => {
+      const encryptedManifest = manifestService.encryptManifestEncFields(
+        mockManifest,
+        secretKey,
+      );
+
+      encryptedManifest.data.hooks.post.forEach((hook: any) => {
+        if (hook.factory === 'email') {
+          const emailParams: any = hook.params;
+          emailParams.recipients.forEach((recipient: any) => {
+            expect(recipient['email:enc']).not.toBe('encrypted email address');
+          });
+        }
+      });
+    });
+
+    it('should encrypt encrypted fields in manifest', () => {
+      const encryptedManifest = manifestService.encryptManifestEncFields(
+        mockManifest,
+        secretKey,
+      );
+
+      Object.values(encryptedManifest.data.fields).forEach((field: any) => {
+        if (field.const['constName2:enc']) {
+          expect(field.const['constName2:enc']).not.toBe('encrypted value');
+        }
+        if (field.const['constName1']) {
+          expect(field.const['constName1']).toBe('const value');
+        }
+      });
+    });
   });
 });
