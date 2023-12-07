@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 export const encrypt = (
   text: string,
   key: string,
-  algorithm = 'aes-256-cbc',
+  algorithm = 'AES-256-GCM',
   IV_LENGTH = 16,
 ): string => {
   if (!text || !key) {
@@ -36,7 +36,7 @@ export const encrypt = (
 export const decrypt = (
   text: string,
   key: string,
-  algorithm = 'aes-256-cbc',
+  algorithm = 'AES-256-GCM',
 ): string => {
   try {
     const [iv, encryptedText] = text
@@ -60,7 +60,7 @@ export const decrypt = (
 export const calculateHmac = (
   data: object,
   secret: string,
-  algorithm = 'sha256',
+  algorithm = 'SHA256',
 ): string => {
   if (!data || !secret) {
     throw new Error('Data and secret are required.');
@@ -78,7 +78,7 @@ export const verifyHmac = (
   data: object,
   secret: string,
   receivedHMAC: string,
-  algorithm = 'sha256',
+  algorithm = 'SHA256',
 ): boolean => {
   try {
     const calculatedHMAC = calculateHmac(data, secret, algorithm);
