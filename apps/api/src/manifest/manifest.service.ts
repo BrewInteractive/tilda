@@ -8,7 +8,6 @@ import {
   Hook,
   TildaManifest,
 } from '../models';
-import { AxiosResponse } from 'axios';
 import { ManifestRequest } from './models/manifest-request.model';
 import { CustomException, ExceptionType } from './exceptions';
 import { encrypt } from '../utils/crypto-helpers';
@@ -33,9 +32,7 @@ export class ManifestService {
 
   async getManifestFromUrl(url: string): Promise<TildaManifest> {
     try {
-      const response = (await firstValueFrom(
-        this.httpService.get(url),
-      )) as AxiosResponse<any, any>;
+      const response = await firstValueFrom(this.httpService.get(url));
       if (response.status !== 200) {
         throw new CustomException(ExceptionType.errorFetchingURL);
       }

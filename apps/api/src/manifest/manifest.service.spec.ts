@@ -4,10 +4,9 @@ import { AxiosResponse } from 'axios';
 import { of } from 'rxjs';
 import { TildaManifest } from '../models';
 import { CustomException, ExceptionType } from './exceptions';
+import { Test, TestingModule } from '@nestjs/testing';
 
 describe('ManifestService', () => {
-  let manifestService: ManifestService;
-  let httpServiceMock: Partial<HttpService>;
   const mockManifest = {
     hmac: '',
     data: {
@@ -70,21 +69,24 @@ describe('ManifestService', () => {
       },
     },
   } as TildaManifest;
+  let manifestService: ManifestService;
+  let httpService: HttpService;
 
-  beforeEach(() => {
-    httpServiceMock = {
-      get: jest.fn(() =>
-        of({
-          data: {},
-          status: 200,
-          statusText: 'OK',
-          headers: {},
-          config: {},
-        } as AxiosResponse<any>),
-      ),
-    };
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ManifestService,
+        {
+          provide: HttpService,
+          useValue: {
+            get: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
 
-    manifestService = new ManifestService(httpServiceMock as HttpService);
+    manifestService = module.get<ManifestService>(ManifestService);
+    httpService = module.get<HttpService>(HttpService);
   });
 
   it('should call getManifestFromUrl when URL is provided in manifestInput', async () => {
@@ -165,7 +167,9 @@ describe('ManifestService', () => {
       data: mockManifest,
     };
 
-    httpServiceMock.get = jest.fn(() => of(mockResponse as AxiosResponse<any>));
+    jest
+      .spyOn(httpService, 'get')
+      .mockReturnValueOnce(of(mockResponse as AxiosResponse));
 
     // Act
     const result = await manifestService.getManifestFromUrl(manifestUrl);
@@ -177,9 +181,10 @@ describe('ManifestService', () => {
   it('should throw error when fetching manifest from URL fails', async () => {
     // Arrange
     const manifestUrl = 'http://example.com/manifest';
-    httpServiceMock.get = jest.fn(() =>
-      of({ status: 404 } as AxiosResponse<any>),
-    );
+
+    jest
+      .spyOn(httpService, 'get')
+      .mockReturnValueOnce(of({ status: 404 } as AxiosResponse));
 
     // Act & Assert
     await expect(
