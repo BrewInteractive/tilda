@@ -11,8 +11,10 @@ describe('Crypto Helpers', () => {
       expect(encryptedText).toBeDefined();
       expect(typeof encryptedText).toBe('string');
       expect(encryptedText).toContain(':');
+      console.log(encryptedText);
 
       const decryptedText = decrypt(encryptedText, secretKey);
+
       expect(decryptedText).toBe(text);
     });
 
