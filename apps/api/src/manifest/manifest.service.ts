@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { TildaManifest } from '../models';
-import { AxiosResponse } from 'axios';
 import { ManifestRequest } from './models/manifest-request.model';
 import { CustomException, ExceptionType } from './exceptions';
 
@@ -26,9 +25,7 @@ export class ManifestService {
 
   async getManifestFromUrl(url: string): Promise<TildaManifest> {
     try {
-      const response = (await firstValueFrom(
-        this.httpService.get(url),
-      )) as AxiosResponse<any, any>;
+      const response = await firstValueFrom(this.httpService.get(url));
       if (response.status !== 200) {
         throw new CustomException(ExceptionType.errorFetchingURL);
       }
