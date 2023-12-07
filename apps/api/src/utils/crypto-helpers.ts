@@ -3,8 +3,9 @@ import * as crypto from 'crypto';
 export const encrypt = (
   text: string,
   key: string,
-  algorithm = 'AES-256-GCM',
-  IV_LENGTH = 16,
+  algorithm = 'AES-256-GCM' as crypto.CipherGCMTypes,
+  IV_LENGTH = 12,
+  authTagLength = 16,
 ): string => {
   if (!text || !key) {
     throw new Error('Text and key are required.');
@@ -20,14 +21,17 @@ export const encrypt = (
       algorithm,
       Buffer.from(key, 'hex'),
       initializationVector,
+      { authTagLength },
     );
 
-    let encrypted = cipher.update(text);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
 
-    return `${initializationVector.toString('hex')}:${encrypted.toString(
+    const authenticationTag = cipher.getAuthTag();
+
+    return `${initializationVector.toString(
       'hex',
-    )}`;
+    )}:${encrypted}:${authenticationTag.toString('hex')}`;
   } catch (error) {
     throw new Error('Encryption failed.');
   }
@@ -36,22 +40,27 @@ export const encrypt = (
 export const decrypt = (
   text: string,
   key: string,
-  algorithm = 'AES-256-GCM',
+  algorithm = 'AES-256-GCM' as crypto.CipherGCMTypes,
+  authTagLength = 16,
 ): string => {
   try {
-    const [iv, encryptedText] = text
+    const [iv, encryptedText, authTag] = text
       .split(':')
       .map((part) => Buffer.from(part, 'hex'));
+
     const decipher = crypto.createDecipheriv(
       algorithm,
       Buffer.from(key, 'hex'),
       iv,
+      { authTagLength },
     );
+
+    decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-    return decrypted.toString();
+    return decrypted.toString('utf8');
   } catch (error) {
     throw new Error('Decryption failed.');
   }
