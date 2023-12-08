@@ -3,7 +3,6 @@ import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { of } from 'rxjs';
 import { TildaManifest } from '../models';
-import { CustomException, ExceptionType } from './exceptions';
 import { Test, TestingModule } from '@nestjs/testing';
 
 describe('ManifestService', () => {
@@ -141,7 +140,7 @@ describe('ManifestService', () => {
 
     // Act & Assert
     await expect(manifestService.getManifest(manifestInput)).rejects.toThrow(
-      new CustomException(ExceptionType.onlyOneProvided),
+      'Only one of url or base64 should be provided',
     );
   });
 
@@ -154,7 +153,7 @@ describe('ManifestService', () => {
 
     // Act & Assert
     await expect(manifestService.getManifest(manifestInput)).rejects.toThrow(
-      new CustomException(ExceptionType.oneOfProvided),
+      'One of url or base64 should be provided',
     );
   });
 
@@ -189,7 +188,9 @@ describe('ManifestService', () => {
     // Act & Assert
     await expect(
       manifestService.getManifestFromUrl(manifestUrl),
-    ).rejects.toThrow(new CustomException(ExceptionType.errorFetchingURL));
+    ).rejects.toThrow(
+      'Error fetching URL Error: Invalid status received (404) while fetching URL',
+    );
   });
 
   it('should decode base64 content', async () => {
@@ -211,6 +212,8 @@ describe('ManifestService', () => {
     // Act & Assert
     await expect(
       manifestService.getManifestFromBase64(invalidBase64Content),
-    ).rejects.toThrow(new CustomException(ExceptionType.errorDecodingBase64));
+    ).rejects.toThrow(
+      `Error decoding base64 Unexpected token '�', \"�{ږ'AjǺ�*'���\" is not valid JSON`,
+    );
   });
 });

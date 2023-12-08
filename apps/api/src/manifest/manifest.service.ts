@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { TildaManifest } from '../models';
 import { ManifestRequest } from './models/manifest-request.model';
-import { CustomException, ExceptionType } from './exceptions';
+import { InputError, ProcessingError } from './errors/manifest.error';
 
 @Injectable()
 export class ManifestService {
@@ -13,10 +13,10 @@ export class ManifestService {
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {
     if (manifestInput.url && manifestInput.base64) {
-      throw new CustomException(ExceptionType.onlyOneProvided);
+      throw new InputError(`Only one of url or base64 should be provided`);
     }
     if (!manifestInput.url && !manifestInput.base64) {
-      throw new CustomException(ExceptionType.oneOfProvided);
+      throw new InputError(`One of url or base64 should be provided`);
     }
     return manifestInput.url
       ? await this.getManifestFromUrl(manifestInput.url)
@@ -27,11 +27,13 @@ export class ManifestService {
     try {
       const response = await firstValueFrom(this.httpService.get(url));
       if (response.status !== 200) {
-        throw new CustomException(ExceptionType.errorFetchingURL);
+        throw new ProcessingError(
+          `Error: Invalid status received (${response.status}) while fetching URL`,
+        );
       }
       return response.data as TildaManifest;
     } catch (error) {
-      throw new CustomException(ExceptionType.errorFetchingURL);
+      throw new ProcessingError(`Error fetching URL ${error.message}`);
     }
   }
   async getManifestFromBase64(base64Content: string): Promise<TildaManifest> {
@@ -43,7 +45,7 @@ export class ManifestService {
 
         return JSON.parse(decodedManifest) as TildaManifest;
       } catch (error) {
-        throw new CustomException(ExceptionType.errorDecodingBase64);
+        throw new ProcessingError(`Error decoding base64 ${error.message}`);
       }
     }
   }
