@@ -30,7 +30,7 @@ export class ManifestService {
       }
       return response.data as TildaManifest;
     } catch (error) {
-      throw new GetManifestError(`Error fetching URL: ${error.message}`);
+      throw new GetManifestError(`Error fetching URL ${error.message}`);
     }
   }
   async getManifestFromBase64(base64Content: string): Promise<TildaManifest> {
