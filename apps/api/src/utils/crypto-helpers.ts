@@ -1,4 +1,9 @@
 import * as crypto from 'crypto';
+import {
+  EncryptionError,
+  DecryptionError,
+  HmacError,
+} from './errors/crypto-helpers.error';
 
 export const encrypt = (
   text: string,
@@ -8,11 +13,11 @@ export const encrypt = (
   authTagLength = 16,
 ): string => {
   if (!text || !key) {
-    throw new Error('Text and key are required.');
+    throw new EncryptionError(`Text and key are required.`);
   }
 
   if (key.length !== 64) {
-    throw new Error('Key must be 32 bytes in hexadecimal.');
+    throw new EncryptionError(`Key must be 32 bytes in hexadecimal.`);
   }
 
   try {
@@ -33,7 +38,7 @@ export const encrypt = (
       'hex',
     )}:${encrypted}:${authenticationTag.toString('hex')}`;
   } catch (error) {
-    throw new Error('Encryption failed.');
+    throw new EncryptionError(`Encryption failed: ${error.message}`);
   }
 };
 
@@ -62,7 +67,7 @@ export const decrypt = (
 
     return decrypted.toString('utf8');
   } catch (error) {
-    throw new Error('Decryption failed.');
+    throw new DecryptionError(`Decryption failed: ${error.message}`);
   }
 };
 
@@ -72,14 +77,14 @@ export const calculateHmac = (
   algorithm = 'SHA256',
 ): string => {
   if (!data || !secret) {
-    throw new Error('Data and secret are required.');
+    throw new HmacError(`Data and secret are required.`);
   }
   try {
     const hmac = crypto.createHmac(algorithm, secret);
     hmac.update(JSON.stringify(data));
     return hmac.digest('hex');
   } catch (error) {
-    throw new Error('HMAC calculation failed.');
+    throw new HmacError(`HMAC calculation failed: ${error.message}`);
   }
 };
 
@@ -97,6 +102,6 @@ export const verifyHmac = (
     );
     return isEqual;
   } catch (error) {
-    throw new Error('HMAC verification failed.');
+    throw new HmacError(`HMAC verification failed: ${error.message}`);
   }
 };

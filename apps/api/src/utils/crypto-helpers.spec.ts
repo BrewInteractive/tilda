@@ -33,11 +33,15 @@ describe('Crypto Helpers', () => {
       const invalidKey =
         'invalidkey86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
 
-      expect(() => encrypt(text, invalidKey)).toThrow('Encryption failed.');
+      expect(() => encrypt(text, invalidKey)).toThrow(
+        'Encryption failed: Invalid key length',
+      );
     });
 
     it('should throw an error if text or key is missing for decrypt', () => {
-      expect(() => decrypt(text, '')).toThrow('Decryption failed.');
+      expect(() => decrypt(text, '')).toThrow(
+        'Decryption failed: Invalid initialization vector',
+      );
     });
   });
   describe('HMAC', () => {
@@ -62,11 +66,11 @@ describe('Crypto Helpers', () => {
       );
       expect(() =>
         calculateHmac(dataObject, secretKey, 'invalidAlgorithm'),
-      ).toThrow('HMAC calculation failed.');
+      ).toThrow('HMAC calculation failed: Invalid digest: invalidAlgorithm');
     });
     it('should throw an error if invalidHMAC for verifyHmac', () => {
       expect(() => verifyHmac(dataObject, secretKey, 'invalidHmac')).toThrow(
-        'HMAC verification failed.',
+        'HMAC verification failed: Input buffers must have the same byte length',
       );
     });
   });
