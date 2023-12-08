@@ -130,20 +130,6 @@ describe('ManifestService', () => {
       manifestInput.base64,
     );
   });
-
-  it('should throw error when both url and base64 provided', async () => {
-    // Arrange
-    const manifestInput = {
-      url: 'http://example.com/manifest',
-      base64: 'someBase64Content',
-    };
-
-    // Act & Assert
-    await expect(manifestService.getManifest(manifestInput)).rejects.toThrow(
-      'Only one of url or base64 should be provided',
-    );
-  });
-
   it('should throw error when neither url nor base64 provided', async () => {
     // Arrange
     const manifestInput = {

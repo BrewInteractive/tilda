@@ -12,9 +12,6 @@ export class ManifestService {
   async getManifest(
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {
-    if (manifestInput.url && manifestInput.base64) {
-      throw new InputError(`Only one of url or base64 should be provided`);
-    }
     if (!manifestInput.url && !manifestInput.base64) {
       throw new InputError(`One of url or base64 should be provided`);
     }
