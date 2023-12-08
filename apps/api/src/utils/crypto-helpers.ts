@@ -71,7 +71,7 @@ export const decrypt = (
   }
 };
 
-export const calculateHmac = (
+export const generateHmac = (
   data: object,
   secret: string,
   algorithm = 'SHA256',
@@ -91,14 +91,14 @@ export const calculateHmac = (
 export const verifyHmac = (
   data: object,
   secret: string,
-  receivedHMAC: string,
+  receivedHmac: string,
   algorithm = 'SHA256',
 ): boolean => {
   try {
-    const calculatedHMAC = calculateHmac(data, secret, algorithm);
+    const generatedHmac = generateHmac(data, secret, algorithm);
     const isEqual = crypto.timingSafeEqual(
-      Buffer.from(calculatedHMAC, 'hex'),
-      Buffer.from(receivedHMAC, 'hex'),
+      Buffer.from(generatedHmac, 'hex'),
+      Buffer.from(receivedHmac, 'hex'),
     );
     return isEqual;
   } catch (error) {
