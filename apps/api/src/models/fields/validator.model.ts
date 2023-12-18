@@ -1,3 +1,4 @@
+import { OnMatchType } from './on-match-type.enum';
 import { ValidatorType } from './validator-type.enum';
 
 export interface Validator {
@@ -6,7 +7,7 @@ export interface Validator {
     value?: string;
     minLength?: string;
     maxLength?: string;
-    onMatch?: 'fail' | 'pass';
+    onMatch?: OnMatchType;
     values?: string[];
   };
 }
