@@ -3,7 +3,7 @@ import { InvalidArgumentException } from './exceptions';
 
 export class Length implements CustomValidation {
   getValidation(params: any): any {
-    if (params && (params.minLength || params.maxLength)) {
+    if (params?.minLength || params?.maxLength) {
       const validation: any = {};
       validation.type = 'string';
 
