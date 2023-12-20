@@ -53,7 +53,7 @@ export const validManifest = {
           params: {
             recipients: [
               {
-                'email:enc': 'encrypted email address',
+                'email:enc': 'example@mail.com',
               },
             ],
           },
@@ -86,7 +86,7 @@ export const requiredFieldMissingManifest = {
           params: {
             recipients: [
               {
-                'email:enc': 'encrypted email address',
+                'email:enc': 'example@mail.com',
               },
             ],
           },
@@ -184,7 +184,7 @@ export const requiredPreHookParamsForMissingUrl = {
           params: {
             recipients: [
               {
-                'email:enc': 'encrypted email address',
+                'email:enc': 'example@mail.com',
               },
             ],
           },
@@ -245,6 +245,68 @@ export const requiredPostHookParamsForMissingEmail = {
           factory: 'email',
           params: {
             recipients: null,
+          },
+        },
+      ],
+    },
+  },
+} as TildaManifest;
+export const requiredPostHookInvalidEmailRegex = {
+  hmac: '',
+  data: {
+    fields: {
+      name: {
+        inputName: '',
+        ui: {
+          label: 'Name',
+        },
+        const: {
+          constName1: 'const value',
+        },
+        validators: [
+          {
+            factory: 'numeric',
+          },
+        ],
+      },
+      surname: {
+        inputName: '',
+        ui: {
+          label: 'Surname',
+        },
+        const: {
+          'constName2:enc': 'encrypted value',
+        },
+        validators: [
+          {
+            factory: 'numeric',
+          },
+        ],
+      },
+    },
+    hooks: {
+      pre: [
+        {
+          factory: 'webhook',
+          params: {
+            url: 'test.example.com',
+            headers: [],
+            method: 'post',
+            values: {
+              nameSurname: '{$.fields.name.value} {$.fields.surname.value}',
+            },
+          },
+        },
+      ],
+      post: [
+        {
+          factory: 'email',
+          params: {
+            recipients: [
+              {
+                'email:enc': 'examplemail.com',
+              },
+            ],
           },
         },
       ],

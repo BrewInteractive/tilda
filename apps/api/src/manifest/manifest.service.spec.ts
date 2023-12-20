@@ -6,6 +6,7 @@ import { TildaManifest } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   requiredFieldMissingManifest,
+  requiredPostHookInvalidEmailRegex,
   requiredPostHookParamsForMissingEmail,
   requiredPreHookParamsForMissingUrl,
   validManifest,
@@ -252,6 +253,7 @@ describe('ManifestService', () => {
       [requiredFieldMissingManifest, false],
       [requiredPreHookParamsForMissingUrl, false],
       [requiredPostHookParamsForMissingEmail, false],
+      [requiredPostHookInvalidEmailRegex, false],
     ])(
       'should manifest schema with input %p and output "%s"',
       (input, expectedOutput) => {
