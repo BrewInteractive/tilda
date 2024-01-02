@@ -26,4 +26,4 @@ These instructions will help you start, configure, test, and use the tilda proje
 
 ## License
 
-Authentication Service is [MIT licensed](LICENSE).
+Tilda is [MIT licensed](LICENSE).
