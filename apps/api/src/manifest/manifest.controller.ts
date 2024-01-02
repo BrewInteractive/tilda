@@ -9,7 +9,9 @@ import {
   EncryptionError,
   HmacError,
 } from '../utils/errors/crypto-helpers.error';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('manifest')
 @Controller('manifest')
 export class ManifestController {
   private secretKey: string;
