@@ -11,6 +11,8 @@ import {
 import { ManifestRequest } from './models/manifest-request.model';
 import { GetManifestError } from './errors/manifest.error';
 import { encrypt } from '../utils/crypto-helpers';
+import TildaManifestSchema from './manifest.schema';
+import Ajv from 'ajv';
 
 @Injectable()
 export class ManifestService {
@@ -88,5 +90,14 @@ export class ManifestService {
     });
 
     return manifest;
+  };
+
+  validateManifest = (manifest: TildaManifest): boolean => {
+    const ajv = new Ajv({ allErrors: true });
+    const validate = ajv.compile(TildaManifestSchema);
+
+    const isValid = validate(manifest);
+
+    return isValid;
   };
 }
