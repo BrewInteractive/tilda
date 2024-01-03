@@ -1,8 +1,8 @@
-import { CustomValidation } from '../custom-validation';
+import { ValidatorInterface } from '../validator.interface';
 import { InvalidArgumentException } from './exceptions';
 
-export class Enum implements CustomValidation {
-  getValidation(params: any): any {
+export class Enum implements ValidatorInterface {
+  getValidator(params: any): any {
     if (params?.values) {
       return {
         type: 'string',

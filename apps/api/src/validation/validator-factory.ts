@@ -1,4 +1,5 @@
 import { ValidatorType } from '../models/fields/validator-type.enum';
+import { ValidatorInterface } from './validator.interface';
 import {
   AlphaNumeric,
   Alpha,
@@ -7,17 +8,13 @@ import {
   Length,
   NotEmpty,
   Regex,
-} from './validation';
+} from './validators';
 
-interface Validation {
-  getValidation(params?: any): any;
-}
-
-export class ValidationFactory {
-  private validation: Map<ValidatorType, Validation>;
+export class ValidatorFactory {
+  private validatorCollection: Map<ValidatorType, ValidatorInterface>;
 
   constructor() {
-    this.validation = new Map([
+    this.validatorCollection = new Map([
       [ValidatorType.alpha, new Alpha()],
       [ValidatorType.numeric, new Numeric()],
       [ValidatorType.alphanumeric, new AlphaNumeric()],
@@ -28,7 +25,7 @@ export class ValidationFactory {
     ]);
   }
 
-  getValidation(factory: ValidatorType): Validation | undefined {
-    return this.validation.get(factory);
+  getValidator(validatorType: ValidatorType): ValidatorInterface | undefined {
+    return this.validatorCollection.get(validatorType);
   }
 }

@@ -1,8 +1,8 @@
-import { CustomValidation } from '../custom-validation';
+import { ValidatorInterface } from '../validator.interface';
 import { InvalidArgumentException } from './exceptions';
 
-export class Regex implements CustomValidation {
-  getValidation(params: any): any {
+export class Regex implements ValidatorInterface {
+  getValidator(params: any): any {
     if (params?.value && params?.onMatch) {
       return {
         type: 'string',
