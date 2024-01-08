@@ -1,15 +1,14 @@
 import Ajv from 'ajv';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Field, TildaData, Validator } from '../models';
 import { ValidatorFactory } from './validator-factory';
 
 @Injectable()
 export class ValidationService {
-  private validatorFactory: ValidatorFactory;
-
-  constructor() {
-    this.validatorFactory = new ValidatorFactory();
-  }
+  constructor(
+    @Inject('ValidatorFactory')
+    private readonly validatorFactory: ValidatorFactory,
+  ) {}
 
   private addValidatorToSchema(
     schema: any,
