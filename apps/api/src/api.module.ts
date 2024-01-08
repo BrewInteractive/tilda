@@ -3,6 +3,7 @@ import { ApiController } from './api.controller';
 import { ApiService } from './api.service';
 import { ManifestModule } from './manifest/manifest.module';
 import { ConfigModule } from '@nestjs/config';
+import { ValidationService } from './validation/validation.service';
 import config from '../src/config/configuration';
 
 @Module({
@@ -14,6 +15,6 @@ import config from '../src/config/configuration';
     }),
   ],
   controllers: [ApiController],
-  providers: [ApiService],
+  providers: [ApiService, ValidationService],
 })
 export class ApiModule {}
