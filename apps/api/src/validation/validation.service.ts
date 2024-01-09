@@ -2,6 +2,7 @@ import Ajv from 'ajv';
 import { Inject, Injectable } from '@nestjs/common';
 import { Field, TildaData, Validator } from '../models';
 import { ValidatorFactory } from './validator-factory';
+import { ValidationResult } from './models/validation-result';
 
 @Injectable()
 export class ValidationService {
@@ -20,7 +21,6 @@ export class ValidationService {
 
     if (customValidator) {
       schema.properties[fieldName] = customValidator.getValidator(params);
-    } else {
     }
   }
 
@@ -39,10 +39,7 @@ export class ValidationService {
     return schema;
   }
 
-  validate(
-    data: any,
-    manifest: TildaData,
-  ): { errors: { path: string; message: string }[] } | null {
+  validate(data: any, manifest: TildaData): ValidationResult {
     const ajv = new Ajv({ allErrors: true });
     const generalSchema = this.generateSchemaFromManifest(manifest);
 
@@ -51,6 +48,7 @@ export class ValidationService {
     const isValid = validate(data);
     if (!isValid) {
       return {
+        success: false,
         errors:
           validate.errors?.map((error) => ({
             path: error.schemaPath,
@@ -59,6 +57,6 @@ export class ValidationService {
       };
     }
 
-    return null;
+    return { success: true };
   }
 }
