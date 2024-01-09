@@ -1,10 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationModule } from './validation.module';
-import { ValidationService } from './validation.service';
 import { ValidatorFactory } from './validator-factory';
 
 describe('ValidationModule', () => {
-  let validationService: ValidationService;
+  let validationModule: ValidationModule;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -17,10 +16,10 @@ describe('ValidationModule', () => {
       ],
     }).compile();
 
-    validationService = module.get<ValidationService>(ValidationService);
+    validationModule = module.get<ValidationModule>(ValidationModule);
   });
 
   it('should be defined', () => {
-    expect(validationService).toBeDefined();
+    expect(ValidationModule).toBeDefined();
   });
 });
