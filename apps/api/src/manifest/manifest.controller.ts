@@ -84,27 +84,26 @@ export class ManifestController {
         base64,
       };
 
-      const manifestResponse =
+      let manifestResponse =
         await this.manifestService.getManifest(manifestInfo);
 
-      let manifest = manifestResponse as TildaManifest;
-
       const isHashValid = verifyHmac(
-        manifest.data,
+        manifestResponse.data,
         this.secretKey,
-        manifest.hmac,
+        manifestResponse.hmac,
       );
 
       if (!isHashValid) {
         throw new HmacError(`Hash is not valid`);
       }
 
-      manifest = this.manifestService.decryptManifestEncFields(
-        manifest,
+      manifestResponse = this.manifestService.decryptManifestEncFields(
+        manifestResponse,
         this.secretKey,
       );
 
-      const isManifestValid = this.manifestService.validateManifest(manifest);
+      const isManifestValid =
+        this.manifestService.validateManifest(manifestResponse);
 
       if (!isManifestValid) {
         res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid manifest' });
@@ -112,7 +111,7 @@ export class ManifestController {
 
       const validationResult = this.validationService.validate(
         payload,
-        manifest.data,
+        manifestResponse.data,
       );
 
       if (!validationResult.success) {
