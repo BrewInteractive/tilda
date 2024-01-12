@@ -94,6 +94,9 @@ export const verifyHmac = (
   receivedHmac: string,
   algorithm = 'SHA256',
 ): boolean => {
+  if (!receivedHmac) {
+    throw new HmacError(`Manifest doesn't have hmac`);
+  }
   try {
     const generatedHmac = generateHmac(data, secret, algorithm);
     const isEqual = crypto.timingSafeEqual(
