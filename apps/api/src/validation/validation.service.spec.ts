@@ -1,18 +1,32 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationService } from './validation.service';
-import { manifest } from './fixtures/manifest-schema-test';
+import {
+  manifest,
+  oneMoreValidatorsManifest,
+} from './fixtures/manifest-schema-test';
 import { faker } from '@faker-js/faker';
+import Ajv from 'ajv';
 
 const mockValidatorFactory = {
-  getValidator: jest.fn(() => {
-    return {
-      getValidator: jest.fn(() => {
+  getValidator: jest.fn((validatorType) => {
+    switch (validatorType) {
+      case 'alpha':
         return {
-          type: 'string',
-          pattern: '^[a-zA-Z]+$',
+          getValidator: jest.fn(() => ({
+            type: 'string',
+            pattern: '^[a-zA-Z]+$',
+          })),
         };
-      }),
-    };
+      case 'regex':
+        return {
+          getValidator: jest.fn(() => ({
+            type: 'string',
+            pattern: '^.{3,10}$',
+          })),
+        };
+      default:
+        return null;
+    }
   }),
 };
 
@@ -24,6 +38,7 @@ describe('ValidationService', () => {
       providers: [
         ValidationService,
         { provide: 'ValidatorFactory', useValue: mockValidatorFactory },
+        { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
       ],
     }).compile();
 
@@ -74,5 +89,29 @@ describe('ValidationService', () => {
     const result = validationService.validate(data, manifest.data);
     expect(result.success).toBe(false);
     expect(result.errors).toHaveLength(2);
+  });
+  it('should validate a single field with 2 validators valid data successfully', () => {
+    const data = {
+      name: faker.string.alpha(3),
+      surname: faker.string.alpha(9),
+    };
+
+    const result = validationService.validate(
+      data,
+      oneMoreValidatorsManifest.data,
+    );
+    expect(result.success).toBe(true);
+  });
+  it('should validate a single field with 2 validators invalid data unsuccessfully', () => {
+    const data = {
+      name: faker.string.alpha(1),
+      surname: faker.string.alpha(1),
+    };
+
+    const result = validationService.validate(
+      data,
+      oneMoreValidatorsManifest.data,
+    );
+    expect(result.success).toBe(false);
   });
 });

@@ -9,21 +9,24 @@ export class ValidationService {
   constructor(
     @Inject('ValidatorFactory')
     private readonly validatorFactory: ValidatorFactory,
+    @Inject('Ajv')
+    private readonly ajv: Ajv,
   ) {}
 
-  private addValidatorToSchema(
+  applyValidatorToSchema(
     schema: any,
     validator: Validator,
     fieldName: string,
   ): void {
     const { factory, params } = validator;
     const customValidator = this.validatorFactory.getValidator(factory);
-
     if (customValidator) {
-      schema.properties[fieldName] = customValidator.getValidator(params);
+      schema.properties[fieldName] = {
+        ...schema.properties[fieldName],
+        ...customValidator.getValidator(params),
+      };
     }
   }
-
   private generateSchemaFromManifest(manifest: TildaData): any {
     const schema: any = { type: 'object', properties: {} };
 
@@ -32,7 +35,7 @@ export class ValidationService {
       const fieldValidators: Validator[] = field.validators || [];
 
       for (const validator of fieldValidators) {
-        this.addValidatorToSchema(schema, validator, fieldName);
+        this.applyValidatorToSchema(schema, validator, fieldName);
       }
     }
 
@@ -40,23 +43,24 @@ export class ValidationService {
   }
 
   validate(data: any, manifest: TildaData): ValidationResult {
-    const ajv = new Ajv({ allErrors: true });
     const generalSchema = this.generateSchemaFromManifest(manifest);
 
-    const validate = ajv.compile(generalSchema);
+    const validate = this.ajv.compile(generalSchema);
 
     const isValid = validate(data);
-    if (!isValid) {
-      return {
-        success: false,
-        errors:
-          validate.errors?.map((error) => ({
-            path: error.schemaPath,
-            message: error.message,
-          })) || [],
-      };
-    }
+    if (!isValid) return this.mapValidationErrors(validate);
 
     return { success: true };
+  }
+
+  private mapValidationErrors(validate: any): ValidationResult {
+    return {
+      success: false,
+      errors:
+        validate.errors?.map((error) => ({
+          path: error.schemaPath,
+          message: error.message,
+        })) || [],
+    };
   }
 }
