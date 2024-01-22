@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -10,13 +10,17 @@ import {
 } from '../models';
 import { ManifestRequest } from './models/manifest-request.model';
 import { GetManifestError } from './errors/manifest.error';
-import { encrypt } from '../utils/crypto-helpers';
+import { decrypt, encrypt } from '../utils/crypto-helpers';
 import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 
 @Injectable()
 export class ManifestService {
-  constructor(private httpService: HttpService) {}
+  constructor(
+    private httpService: HttpService,
+    @Inject('Ajv')
+    private readonly ajv: Ajv,
+  ) {}
 
   async getManifest(
     manifestInput: ManifestRequest,
@@ -92,9 +96,43 @@ export class ManifestService {
     return manifest;
   };
 
+  decryptManifestEmailRecipients = (
+    emailRecipients: EmailRecipient[],
+    secret: string,
+  ): void => {
+    emailRecipients.forEach((recipient) => {
+      recipient['email:enc'] = decrypt(recipient['email:enc'], secret);
+    });
+  };
+
+  decryptManifestEncFields = (
+    manifest: TildaManifest,
+    secret: string,
+  ): TildaManifest => {
+    manifest.data.hooks.post.forEach((hook: Hook) => {
+      if (hook.factory === 'email') {
+        const emailParams: EmailParams = hook.params as EmailParams;
+        this.decryptManifestEmailRecipients(emailParams.recipients, secret);
+      }
+    });
+
+    Object.values(manifest.data.fields).forEach((field: Field) => {
+      this.decryptFieldConstValues(field, secret);
+    });
+    return manifest;
+  };
+
+  decryptFieldConstValues = (field: Field, secret: string): void => {
+    Object.keys(field.const).forEach((constKey: string) => {
+      const constValue = field.const[constKey];
+      if (constKey.endsWith(':enc')) {
+        field.const[constKey] = decrypt(constValue, secret);
+      }
+    });
+  };
+
   validateManifest = (manifest: TildaManifest): boolean => {
-    const ajv = new Ajv({ allErrors: true });
-    const validate = ajv.compile(TildaManifestSchema);
+    const validate = this.ajv.compile(TildaManifestSchema);
 
     const isValid = validate(manifest);
 

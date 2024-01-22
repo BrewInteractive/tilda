@@ -11,7 +11,6 @@ describe('Crypto Helpers', () => {
       expect(encryptedText).toBeDefined();
       expect(typeof encryptedText).toBe('string');
       expect(encryptedText).toContain(':');
-      console.log(encryptedText);
 
       const decryptedText = decrypt(encryptedText, secretKey);
 
@@ -71,6 +70,11 @@ describe('Crypto Helpers', () => {
     it('should throw an error if invalidHMAC for verifyHmac', () => {
       expect(() => verifyHmac(dataObject, secretKey, 'invalidHmac')).toThrow(
         'HMAC verification failed: Input buffers must have the same byte length',
+      );
+    });
+    it('should throw an error if null hmac for verifyHmac', () => {
+      expect(() => verifyHmac(dataObject, secretKey, null)).toThrow(
+        `Manifest doesn't have hmac`,
       );
     });
   });
