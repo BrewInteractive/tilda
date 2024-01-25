@@ -25,6 +25,8 @@ describe('EmailModule', () => {
 
   it('Should throw error', async () => {
     const expectedError = new Error('Invalid email service type');
+    process.env.EMAIL_SERVICE = 'invalid';
+
     await expect(
       Test.createTestingModule({
         imports: [
