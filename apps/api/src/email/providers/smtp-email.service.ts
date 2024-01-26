@@ -23,14 +23,6 @@ export class SmtpEmailService extends EmailService {
   }
 
   async sendEmailAsync(email: Email): Promise<void> {
-    const mailInfo = {
-      from: email.from,
-      to: email.to,
-      subject: email.subject,
-      text: email.text,
-      html: email.html,
-    };
-
-    await this.transporter.sendMail(mailInfo);
+    await this.transporter.sendMail(email);
   }
 }
