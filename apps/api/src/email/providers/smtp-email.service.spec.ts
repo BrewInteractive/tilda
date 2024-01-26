@@ -46,12 +46,6 @@ describe('SmtpEmailService', () => {
 
     // Assert
     expect(sendMailMock).toHaveBeenCalledTimes(1);
-    expect(sendMailMock).toHaveBeenCalledWith({
-      from: email.from,
-      to: email.to,
-      subject: email.subject,
-      text: email.text,
-      html: email.html,
-    });
+    expect(sendMailMock).toHaveBeenCalledWith({ ...email });
   });
 });
