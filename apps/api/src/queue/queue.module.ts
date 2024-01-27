@@ -2,12 +2,15 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
-import { PostHookProcessor } from './post-hook.processor';
-import { SendEmailProcessor } from './send-email.processor';
+import { PostHookQueue } from './post-hook.queue';
+import { SendEmailQueue } from './send-email.queue';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { QueueService } from './queue.service';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -23,6 +26,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       adapter: ExpressAdapter,
     }),
   ],
-  providers: [PostHookProcessor, SendEmailProcessor],
+  providers: [PostHookQueue, SendEmailQueue, QueueService],
 })
-export class BullQueueModule {}
+export class QueueModule {}

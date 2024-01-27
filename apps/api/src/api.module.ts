@@ -5,12 +5,12 @@ import { ManifestModule } from './manifest/manifest.module';
 import { ConfigModule } from '@nestjs/config';
 import { ValidationModule } from './validation/validation.module';
 import config from '../src/config/configuration';
-import { BullQueueModule } from './queue/bull.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
     ManifestModule,
-    BullQueueModule,
+    QueueModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
