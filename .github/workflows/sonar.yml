@@ -9,6 +9,7 @@ on:
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
+    environment: action-test
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
