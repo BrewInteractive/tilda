@@ -122,6 +122,10 @@ export class ManifestController {
         );
       }
 
+      await this.manifestService.handlePostHooks(
+        manifestResponse.data.hooks.post,
+      );
+
       res.status(HttpStatus.OK).json(validationResult);
     } catch (error) {
       if (

@@ -13,6 +13,8 @@ import { GetManifestError } from './errors/manifest.error';
 import { decrypt, encrypt } from '../utils/crypto-helpers';
 import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class ManifestService {
@@ -20,8 +22,19 @@ export class ManifestService {
     private httpService: HttpService,
     @Inject('Ajv')
     private readonly ajv: Ajv,
+    @InjectQueue('post-hook') private readonly postHookQueue: Queue,
+    @InjectQueue('send-email') private readonly sendEmailQueue: Queue,
   ) {}
 
+  async handlePostHooks(hooks: Hook[]): Promise<void> {
+    for (const hook of hooks) {
+      if (hook.factory === 'webhook') {
+        await this.postHookQueue.add(hook.params);
+      } else if (hook.factory === 'email') {
+        await this.sendEmailQueue.add(hook.params);
+      }
+    }
+  }
   async getManifest(
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {
