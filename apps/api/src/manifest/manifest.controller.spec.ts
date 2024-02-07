@@ -14,6 +14,7 @@ import {
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
 import Ajv from 'ajv';
+import { BullModule } from '@nestjs/bull';
 
 jest.mock('../utils/crypto-helpers', () => ({
   generateHmac: jest.fn(),
@@ -27,7 +28,17 @@ describe('ManifestController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ManifestController],
-      imports: [ValidationModule],
+      imports: [
+        ValidationModule,
+        BullModule.registerQueue(
+          {
+            name: 'post-hook',
+          },
+          {
+            name: 'send-email',
+          },
+        ),
+      ],
       providers: [
         ValidationService,
         {
@@ -147,6 +158,9 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
+    jest
+      .spyOn(manifestService, 'handlePostHooks')
+      .mockImplementation(async () => {});
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -178,7 +192,9 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(false);
-
+    jest
+      .spyOn(manifestService, 'handlePostHooks')
+      .mockImplementation(async () => {});
     const mockResponse = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),

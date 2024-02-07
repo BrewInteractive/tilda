@@ -2,7 +2,7 @@ import { ManifestService } from './manifest.service';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { of } from 'rxjs';
-import { TildaManifest } from '../models';
+import { Hook, TildaManifest } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   encryptedValidManifest,
@@ -14,13 +14,27 @@ import {
   validManifestBase64,
 } from './fixtures/manifest-schema-test';
 import Ajv from 'ajv';
+import { BullModule, getQueueToken } from '@nestjs/bull';
+import { MockFactory } from 'mockingbird';
+import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
   let httpService: HttpService;
+  const queueMock = { add: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        BullModule.registerQueue(
+          {
+            name: 'post-hook',
+          },
+          {
+            name: 'send-email',
+          },
+        ),
+      ],
       providers: [
         ManifestService,
         {
@@ -31,7 +45,12 @@ describe('ManifestService', () => {
         },
         { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
       ],
-    }).compile();
+    })
+      .overrideProvider(getQueueToken('post-hook'))
+      .useValue(queueMock)
+      .overrideProvider(getQueueToken('send-email'))
+      .useValue(queueMock)
+      .compile();
 
     manifestService = module.get<ManifestService>(ManifestService);
     httpService = module.get<HttpService>(HttpService);
@@ -144,6 +163,17 @@ describe('ManifestService', () => {
     ).rejects.toThrow(
       `Error decoding base64 Unexpected token '�', \"�{ږ'AjǺ�*'���\" is not valid JSON`,
     );
+  });
+
+  it('should add both hooks to their respective queues', async () => {
+    const webHookFixture = MockFactory(WebHookFixture).one();
+    const emailHookFixture = MockFactory(EmailHookFixture).one();
+    const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
+
+    await manifestService.handlePostHooks(hooks);
+
+    expect(queueMock.add).toHaveBeenCalledWith(hooks[0].params);
+    expect(queueMock.add).toHaveBeenCalledWith(hooks[1].params);
   });
 
   describe('Validate Manifest', () => {
