@@ -6,7 +6,6 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { TildaManifest } from '../models';
 import { ManifestService } from './manifest.service';
 import { ConfigService } from '@nestjs/config';
 import { ManifestRequest } from './models/manifest-request.model';
