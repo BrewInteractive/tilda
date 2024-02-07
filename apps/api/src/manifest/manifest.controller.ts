@@ -43,7 +43,7 @@ export class ManifestController {
       const manifestResponse =
         await this.manifestService.getManifest(manifestInput);
 
-      let manifest = manifestResponse as TildaManifest;
+      let manifest = manifestResponse;
 
       const isManifestValid = this.manifestService.validateManifest(manifest);
       if (!isManifestValid) {
