@@ -13,6 +13,7 @@ describe('ApiController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
+    process.env.EMAIL_SERVICE = 'SMTP';
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ApiModule],
     }).compile();
