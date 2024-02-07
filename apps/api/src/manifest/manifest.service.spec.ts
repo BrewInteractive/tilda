@@ -12,7 +12,7 @@ import {
   requiredPreHookParamsForMissingUrl,
   validManifest,
   validManifestBase64,
-} from './fixtures/manifest-schema-test';
+} from './fixtures/manifest-schema.fixture';
 import Ajv from 'ajv';
 
 describe('ManifestService', () => {

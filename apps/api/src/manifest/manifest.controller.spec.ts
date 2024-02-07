@@ -10,7 +10,7 @@ import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 import {
   encryptedValidManifest,
   validManifest,
-} from './fixtures/manifest-schema-test';
+} from './fixtures/manifest-schema.fixture';
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
 import Ajv from 'ajv';

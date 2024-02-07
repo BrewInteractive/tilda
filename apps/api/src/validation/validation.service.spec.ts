@@ -3,7 +3,7 @@ import { ValidationService } from './validation.service';
 import {
   manifest,
   oneMoreValidatorsManifest,
-} from './fixtures/manifest-schema-test';
+} from './fixtures/manifest-schema.fixture';
 import { faker } from '@faker-js/faker';
 import Ajv from 'ajv';
 
