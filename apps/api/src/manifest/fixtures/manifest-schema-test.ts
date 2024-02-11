@@ -365,3 +365,67 @@ export const encryptedValidManifest = {
 } as TildaManifest;
 export const validManifestBase64 =
   'ICAgICAgeyJobWFjIjoiIiwiZGF0YSI6eyJmaWVsZHMiOnsibmFtZSI6eyJpbnB1dE5hbWUiOiIiLCJ1aSI6eyJsYWJlbCI6Ik5hbWUifSwiY29uc3QiOnsiY29uc3ROYW1lMSI6ImNvbnN0IHZhbHVlIn0sInZhbGlkYXRvcnMiOlt7ImZhY3RvcnkiOiJudW1lcmljIn1dfSwic3VybmFtZSI6eyJpbnB1dE5hbWUiOiIiLCJ1aSI6eyJsYWJlbCI6IlN1cm5hbWUifSwiY29uc3QiOnsiY29uc3ROYW1lMjplbmMiOiJlbmNyeXB0ZWQgdmFsdWUifSwidmFsaWRhdG9ycyI6W3siZmFjdG9yeSI6Im51bWVyaWMifV19fSwiaG9va3MiOnsicHJlIjpbeyJmYWN0b3J5Ijoid2ViaG9vayIsInBhcmFtcyI6eyJ1cmwiOiJ0ZXN0LmV4YW1wbGUuY29tIiwiaGVhZGVycyI6W10sIm1ldGhvZCI6InBvc3QiLCJ2YWx1ZXMiOnsibmFtZVN1cm5hbWUiOiJ7JC5maWVsZHMubmFtZS52YWx1ZX0geyQuZmllbGRzLnN1cm5hbWUudmFsdWV9In19fV0sInBvc3QiOlt7ImZhY3RvcnkiOiJlbWFpbCIsInBhcmFtcyI6eyJyZWNpcGllbnRzIjpbeyJlbWFpbDplbmMiOiJleGFtcGxlQG1haWwuY29tIn1dfX1dfX19';
+export const validManifestForWebhookValueTransform = {
+  hmac: '',
+  data: {
+    fields: {
+      name: {
+        inputName: 'testName',
+        ui: {
+          label: 'Name',
+        },
+        const: {
+          constName1: 'const value',
+        },
+        validators: [
+          {
+            factory: 'numeric',
+          },
+        ],
+      },
+      surname: {
+        inputName: '',
+        ui: {
+          label: 'Surname',
+        },
+        const: {
+          'constName2:enc': 'encrypted value',
+        },
+        validators: [
+          {
+            factory: 'numeric',
+          },
+        ],
+      },
+    },
+    hooks: {
+      pre: [
+        {
+          factory: 'webhook',
+          params: {
+            url: 'test.example.com',
+            headers: [],
+            method: 'post',
+            values: {
+              nameSurname: '{$.fields.name.value} {$.fields.surname.value}',
+              nameConstValue: '{$.fields.name.const.constName1.value}',
+              surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
+            },
+          },
+        },
+      ],
+      post: [
+        {
+          factory: 'email',
+          params: {
+            recipients: [
+              {
+                'email:enc': 'example@mail.com',
+              },
+            ],
+          },
+        },
+      ],
+    },
+  },
+} as TildaManifest;

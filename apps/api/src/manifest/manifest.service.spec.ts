@@ -2,7 +2,7 @@ import { ManifestService } from './manifest.service';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { of } from 'rxjs';
-import { Hook, TildaManifest } from '../models';
+import { Hook, TildaManifest, WebhookParams } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   encryptedValidManifest,
@@ -12,11 +12,13 @@ import {
   requiredPreHookParamsForMissingUrl,
   validManifest,
   validManifestBase64,
+  validManifestForWebhookValueTransform,
 } from './fixtures/manifest-schema-test';
 import Ajv from 'ajv';
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { MockFactory } from 'mockingbird';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
+import { faker } from '@faker-js/faker';
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
@@ -255,6 +257,139 @@ describe('ManifestService', () => {
           expect(field.const['constName1']).toBe('const value');
         }
       });
+    });
+  });
+  describe('Set Webhook Params Functions', () => {
+    it('should set webhook params values the correct output', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifestForWebhookValueTransform),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+      const payload = {
+        surname,
+        testName: name,
+      };
+
+      const generatedKeyValues = {
+        surname,
+        testName: name,
+        name: name,
+        'testName.const.constName1': 'const value',
+        'name.const.constName1': 'const value',
+        'surname.const.constName2:enc': 'encrypted value',
+      };
+
+      const transformedPatternValues = {
+        nameSurname: `${name} ${surname}`,
+        nameConstValue: 'const value',
+        surnameConstEncValue: 'encrypted value',
+      };
+
+      const expectedValues = {
+        nameSurname: `${name} ${surname}`,
+        nameConstValue: 'const value',
+        surnameConstEncValue: 'encrypted value',
+      };
+
+      jest
+        .spyOn(manifestService, 'generateWebhookKeyValues')
+        .mockReturnValue(generatedKeyValues);
+
+      jest
+        .spyOn(manifestService, 'transformPatternValues')
+        .mockReturnValue(transformedPatternValues);
+
+      manifestService.setWebhookParamsValues(
+        manifest as TildaManifest,
+        payload,
+      );
+
+      expect(
+        (manifest.data.hooks.pre[0].params as WebhookParams).values,
+      ).toEqual(expectedValues);
+    });
+    it('should generate the correct all key values with inputName', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifestForWebhookValueTransform),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+      const payload = {
+        surname,
+        testName: name,
+      };
+
+      const expectedOutput = {
+        surname,
+        testName: name,
+        name,
+        'testName.const.constName1': 'const value',
+        'name.const.constName1': 'const value',
+        'surname.const.constName2:enc': 'encrypted value',
+      };
+
+      const generatedKeyValues = manifestService.generateWebhookKeyValues(
+        manifest as TildaManifest,
+        payload,
+      );
+
+      expect(generatedKeyValues).toEqual(expectedOutput);
+    });
+    it('should generate the correct all key values with fieldName', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifestForWebhookValueTransform),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+      const payload = {
+        surname,
+        name,
+      };
+
+      const expectedOutput = {
+        surname,
+        testName: name,
+        name,
+        'testName.const.constName1': 'const value',
+        'name.const.constName1': 'const value',
+        'surname.const.constName2:enc': 'encrypted value',
+      };
+
+      const generatedKeyValues = manifestService.generateWebhookKeyValues(
+        manifest as TildaManifest,
+        payload,
+      );
+
+      expect(generatedKeyValues).toEqual(expectedOutput);
+    });
+    it('should tranform the correct all webhook', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifestForWebhookValueTransform),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+
+      const webhookKeyValues = {
+        surname,
+        testName: name,
+        name,
+        'testName.const.constName1': 'const value',
+        'name.const.constName1': 'const value',
+      };
+
+      const expectedValues = {
+        nameSurname: name + ' ' + surname,
+        nameConstValue: 'const value',
+        surnameConstEncValue: '',
+      };
+
+      const transformedPatternValues = manifestService.transformPatternValues(
+        (manifest.data.hooks.pre[0].params as WebhookParams).values,
+        webhookKeyValues,
+      );
+
+      expect(transformedPatternValues).toEqual(expectedValues);
     });
   });
 });
