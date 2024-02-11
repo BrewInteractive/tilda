@@ -122,6 +122,8 @@ export class ManifestController {
         );
       }
 
+      this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+
       await this.manifestService.handlePostHooks(
         manifestResponse.data.hooks.post,
       );
