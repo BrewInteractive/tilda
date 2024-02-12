@@ -1,11 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationService } from './validation.service';
-import {
-  manifest,
-  oneMoreValidatorsManifest,
-} from './fixtures/manifest-schema.fixture';
 import { faker } from '@faker-js/faker';
 import Ajv from 'ajv';
+import { MockFactory } from 'mockingbird';
+import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { ValidatorType } from '../models/fields/validator-type.enum';
 
 const mockValidatorFactory = {
   getValidator: jest.fn((validatorType) => {
@@ -32,7 +31,30 @@ const mockValidatorFactory = {
 
 describe('ValidationService', () => {
   let validationService: ValidationService;
-
+  const validManifest = MockFactory(TildaManifestFixture).one();
+  const oneMoreValidatorsManifest = MockFactory(TildaManifestFixture).one();
+  oneMoreValidatorsManifest.data.fields['name'].validators = [
+    {
+      factory: ValidatorType.alpha,
+    },
+    {
+      factory: ValidatorType.regex,
+      params: {
+        value: '^[a-zA-Z]+$',
+      },
+    },
+  ];
+  oneMoreValidatorsManifest.data.fields['surname'].validators = [
+    {
+      factory: ValidatorType.alpha,
+    },
+    {
+      factory: ValidatorType.regex,
+      params: {
+        value: '^[a-zA-Z]+$',
+      },
+    },
+  ];
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -54,7 +76,7 @@ describe('ValidationService', () => {
       name: faker.string.alpha(10),
     };
 
-    const result = validationService.validate(data, manifest.data);
+    const result = validationService.validate(data, validManifest.data);
     expect(result.success).toBe(true);
   });
 
@@ -63,7 +85,7 @@ describe('ValidationService', () => {
       name: faker.number.int(10),
     };
 
-    const result = validationService.validate(data, manifest.data);
+    const result = validationService.validate(data, validManifest.data);
     expect(result.success).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].message).toBe('must be string');
@@ -75,7 +97,7 @@ describe('ValidationService', () => {
       surname: faker.string.alpha(10),
     };
 
-    const result = validationService.validate(data, manifest.data);
+    const result = validationService.validate(data, validManifest.data);
     expect(result.success).toBe(true);
     expect(result.errors).toBeUndefined();
   });
@@ -86,7 +108,7 @@ describe('ValidationService', () => {
       surname: faker.number.int(10),
     };
 
-    const result = validationService.validate(data, manifest.data);
+    const result = validationService.validate(data, validManifest.data);
     expect(result.success).toBe(false);
     expect(result.errors).toHaveLength(2);
   });

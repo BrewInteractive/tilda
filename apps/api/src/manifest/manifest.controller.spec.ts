@@ -7,14 +7,13 @@ import { ManifestRequest } from './models/manifest-request.model';
 import { HttpService } from '@nestjs/axios';
 import { faker } from '@faker-js/faker';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
-import {
-  encryptedValidManifest,
-  validManifest,
-} from './fixtures/manifest-schema.fixture';
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
 import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
+import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { MockFactory } from 'mockingbird';
+import { EmailParams } from '../models';
 
 jest.mock('../utils/crypto-helpers', () => ({
   generateHmac: jest.fn(),
@@ -24,7 +23,18 @@ describe('ManifestController', () => {
   let manifestController: ManifestController;
   let manifestService: ManifestService;
   let validationService: ValidationService;
-
+  const validManifest = MockFactory(TildaManifestFixture).one();
+  const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
+  encryptedValidManifest.hmac =
+    '44a98ec59c22d24b6b6a612b4acd90f68180237412e4c3e01dd1f913542dc9c4';
+  (
+    encryptedValidManifest.data.hooks.post[0].params as EmailParams
+  ).recipients[0]['email:enc'] =
+    '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
+  encryptedValidManifest.data.fields['name'].const['constName1'] =
+    'const value';
+  encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
+    'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ManifestController],

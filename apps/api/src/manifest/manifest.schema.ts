@@ -69,7 +69,7 @@ const TildaManifestSchema = {
                       },
                       method: {
                         type: 'string',
-                        enum: ['post', 'get'],
+                        enum: ['post', 'get', 'POST', 'GET'],
                       },
                       headers: {
                         type: 'array',

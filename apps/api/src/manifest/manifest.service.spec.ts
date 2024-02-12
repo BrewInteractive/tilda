@@ -2,23 +2,14 @@ import { ManifestService } from './manifest.service';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
 import { of } from 'rxjs';
-import { Hook, TildaManifest, WebhookParams } from '../models';
+import { EmailParams, Hook, TildaManifest, WebhookParams } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  encryptedValidManifest,
-  requiredFieldMissingManifest,
-  requiredPostHookInvalidEmailRegex,
-  requiredPostHookParamsForMissingEmail,
-  requiredPreHookParamsForMissingUrl,
-  validManifest,
-  validManifestBase64,
-  validManifestForWebhookValueTransform,
-} from './fixtures/manifest-schema.fixture';
 import Ajv from 'ajv';
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { MockFactory } from 'mockingbird';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
+import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
@@ -59,6 +50,10 @@ describe('ManifestService', () => {
   });
 
   it('should call getManifestFromUrl when URL is provided in manifestInput', async () => {
+    const mockTildaManifest = MockFactory(
+      TildaManifestFixture,
+    ).one() as TildaManifest;
+
     // Arrange
     const manifestInput = {
       url: 'http://example.com/manifest',
@@ -67,7 +62,7 @@ describe('ManifestService', () => {
 
     jest
       .spyOn(manifestService, 'getManifestFromUrl')
-      .mockResolvedValueOnce(validManifest as TildaManifest);
+      .mockResolvedValueOnce(mockTildaManifest as TildaManifest);
 
     // Act
     await manifestService.getManifest(manifestInput);
@@ -80,14 +75,18 @@ describe('ManifestService', () => {
   });
 
   it('should call getManifestFromBase64 when base64 is provided in manifestInput', async () => {
+    const mockTildaManifest = MockFactory(
+      TildaManifestFixture,
+    ).one() as TildaManifest;
+
     const manifestInput = {
       url: '',
-      base64: validManifestBase64,
+      base64: 'validManifestBase64',
     };
 
     jest
       .spyOn(manifestService, 'getManifestFromBase64')
-      .mockResolvedValueOnce(validManifest as TildaManifest);
+      .mockResolvedValueOnce(mockTildaManifest as TildaManifest);
 
     // Act
     await manifestService.getManifest(manifestInput);
@@ -111,12 +110,13 @@ describe('ManifestService', () => {
   });
 
   it('should fetch manifest from URL', async () => {
+    const mockTildaManifest = MockFactory(TildaManifestFixture).one();
     // Arrange
 
     const manifestUrl = 'http://example.com/manifest';
     const mockResponse = {
       status: 200,
-      data: validManifest,
+      data: mockTildaManifest,
     };
 
     jest
@@ -127,7 +127,7 @@ describe('ManifestService', () => {
     const result = await manifestService.getManifestFromUrl(manifestUrl);
 
     // Assert
-    expect(result).toEqual(validManifest);
+    expect(result).toEqual(mockTildaManifest);
   });
 
   it('should throw error when fetching manifest from URL fails', async () => {
@@ -147,12 +147,14 @@ describe('ManifestService', () => {
   });
 
   it('should decode base64 content', async () => {
+    const mockTildaManifest = MockFactory(TildaManifestFixture).one();
+    const base64String = btoa(JSON.stringify(mockTildaManifest));
+
     // Act
-    const result =
-      await manifestService.getManifestFromBase64(validManifestBase64);
+    const result = await manifestService.getManifestFromBase64(base64String);
 
     // Assert
-    expect(result).toEqual(validManifest);
+    expect(result).toEqual(mockTildaManifest);
   });
 
   it('should throw error when decoding base64 fails', async () => {
@@ -179,6 +181,31 @@ describe('ManifestService', () => {
   });
 
   describe('Validate Manifest', () => {
+    const validManifest = MockFactory(TildaManifestFixture).one();
+    const requiredFieldMissingManifest =
+      MockFactory(TildaManifestFixture).one();
+    requiredFieldMissingManifest.data.fields = {};
+
+    const requiredPreHookParamsForMissingUrl =
+      MockFactory(TildaManifestFixture).one();
+    (
+      requiredPreHookParamsForMissingUrl.data.hooks.pre[0]
+        .params as WebhookParams
+    ).url = '';
+
+    const requiredPostHookParamsForMissingEmail =
+      MockFactory(TildaManifestFixture).one();
+    (
+      requiredPostHookParamsForMissingEmail.data.hooks.post[0]
+        .params as EmailParams
+    ).recipients = null;
+
+    const requiredPostHookInvalidEmailRegex =
+      MockFactory(TildaManifestFixture).one();
+    (
+      requiredPostHookInvalidEmailRegex.data.hooks.post[0].params as EmailParams
+    ).recipients[0]['email:enc'] = 'examplemail.com';
+
     test.each([
       [validManifest, true],
       [requiredFieldMissingManifest, false],
@@ -195,6 +222,13 @@ describe('ManifestService', () => {
   });
 
   describe('Encryption Functions', () => {
+    const validManifest = MockFactory(TildaManifestFixture).one();
+    (validManifest.data.hooks.post[0].params as EmailParams).recipients[0][
+      'email:enc'
+    ] = 'example@mail.com';
+    validManifest.data.fields['name'].const['constName1'] = 'const value';
+    validManifest.data.fields['surname'].const['constName2:enc'] =
+      'encrypted value';
     const secretKey =
       'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
 
@@ -232,6 +266,17 @@ describe('ManifestService', () => {
   });
 
   describe('Decryption Functions', () => {
+    const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
+    encryptedValidManifest.hmac =
+      '44a98ec59c22d24b6b6a612b4acd90f68180237412e4c3e01dd1f913542dc9c4';
+    (
+      encryptedValidManifest.data.hooks.post[0].params as EmailParams
+    ).recipients[0]['email:enc'] =
+      '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
+    encryptedValidManifest.data.fields['name'].const['constName1'] =
+      'const value';
+    encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
+      'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
     const secretKey =
       'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
 
@@ -260,9 +305,20 @@ describe('ManifestService', () => {
     });
   });
   describe('Set Webhook Params Functions', () => {
+    const validManifest = MockFactory(TildaManifestFixture).one();
+    validManifest.data.fields['name'].inputName = 'testName';
+    validManifest.data.fields['name'].const['constName1'] = 'const value';
+    validManifest.data.fields['surname'].const['constName2:enc'] =
+      'encrypted value';
+    (validManifest.data.hooks.pre[0].params as WebhookParams).values = {
+      nameSurname: '{$.fields.name.value} {$.fields.surname.value}',
+      nameConstValue: '{$.fields.name.const.constName1.value}',
+      surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
+    };
+
     it('should set webhook params values the correct output', () => {
       const manifest = JSON.parse(
-        JSON.stringify(validManifestForWebhookValueTransform),
+        JSON.stringify(validManifest),
       ) as TildaManifest;
       const name = faker.person.firstName();
       const surname = faker.person.lastName();
@@ -311,7 +367,7 @@ describe('ManifestService', () => {
     });
     it('should generate the correct all key values with inputName', () => {
       const manifest = JSON.parse(
-        JSON.stringify(validManifestForWebhookValueTransform),
+        JSON.stringify(validManifest),
       ) as TildaManifest;
       const name = faker.person.firstName();
       const surname = faker.person.lastName();
@@ -338,7 +394,7 @@ describe('ManifestService', () => {
     });
     it('should generate the correct all key values with fieldName', () => {
       const manifest = JSON.parse(
-        JSON.stringify(validManifestForWebhookValueTransform),
+        JSON.stringify(validManifest),
       ) as TildaManifest;
       const name = faker.person.firstName();
       const surname = faker.person.lastName();
@@ -365,7 +421,7 @@ describe('ManifestService', () => {
     });
     it('should tranform the correct all webhook', () => {
       const manifest = JSON.parse(
-        JSON.stringify(validManifestForWebhookValueTransform),
+        JSON.stringify(validManifest),
       ) as TildaManifest;
       const name = faker.person.firstName();
       const surname = faker.person.lastName();
