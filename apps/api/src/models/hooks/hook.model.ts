@@ -1,6 +1,6 @@
 import { HookType } from './hook-type.enum';
 
-interface WebhookParams {
+export interface WebhookParams {
   url: string;
   headers: string[];
   method: string;

@@ -7,6 +7,7 @@ import {
   Field,
   Hook,
   TildaManifest,
+  WebhookParams,
 } from '../models';
 import { ManifestRequest } from './models/manifest-request.model';
 import { GetManifestError } from './errors/manifest.error';
@@ -150,5 +151,83 @@ export class ManifestService {
     const isValid = validate(manifest);
 
     return isValid;
+  };
+
+  generateWebhookKeyValues = (
+    manifest: TildaManifest,
+    payload,
+  ): { [key: string]: string } => {
+    const output = { ...payload };
+
+    for (const fieldKey in manifest.data.fields) {
+      if (manifest.data.fields.hasOwnProperty(fieldKey)) {
+        const field = manifest.data.fields[fieldKey];
+        const fieldName = field.inputName || fieldKey;
+
+        if (field.inputName) {
+          output[field.inputName] =
+            payload[field.inputName] || payload[fieldKey];
+          if (!output[fieldKey]) output[fieldKey] = payload[field.inputName];
+        }
+
+        for (const constKey in field.const) {
+          const constValue = field.const[constKey];
+          output[`${fieldName}.const.${constKey}`] = constValue;
+          output[`${fieldKey}.const.${constKey}`] = constValue;
+        }
+      }
+    }
+
+    return output;
+  };
+
+  transformPatternValues = (
+    values: WebhookParams['values'],
+    output: { [key: string]: string },
+  ): { [key: string]: string } => {
+    const valuesCopy = JSON.parse(JSON.stringify(values));
+    const outputDict: { [key: string]: string } = {};
+    Object.entries(valuesCopy).forEach(([key, value]) => {
+      const strValue = value as string;
+      const matches = strValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
+      if (matches) {
+        const mappedValues = matches.map((match) =>
+          match
+            .replace(/\{(?:\$\.)?fields\.([^}]+)\}/, '$1')
+            .replace('.value', '')
+            .replace(':enc', ''),
+        );
+
+        outputDict[key] = mappedValues
+          .map(
+            (mappedValue) =>
+              output[mappedValue] || output[`${mappedValue}:enc`] || '',
+          )
+          .join(' ');
+      }
+    });
+    return outputDict;
+  };
+
+  setWebhookParamsValues = (manifest: TildaManifest, payload): void => {
+    const output = this.generateWebhookKeyValues(manifest, payload);
+
+    const transformHookParamsValues = (hooks: Hook[]): void => {
+      hooks.forEach((hook) => {
+        if (
+          hook.factory === 'webhook' &&
+          hook.params &&
+          (hook.params as WebhookParams).values
+        ) {
+          (hook.params as WebhookParams).values = this.transformPatternValues(
+            (hook.params as WebhookParams).values,
+            output,
+          );
+        }
+      });
+    };
+
+    transformHookParamsValues(manifest.data.hooks.pre);
+    transformHookParamsValues(manifest.data.hooks.post);
   };
 }
