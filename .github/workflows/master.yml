@@ -5,9 +5,6 @@ on:
       - main
  
 jobs:
-  sonarcloud:
-    runs-on: ubuntu-latest
-
   publish:
     runs-on: ubuntu-latest
     environment: action-test
