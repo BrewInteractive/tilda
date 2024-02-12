@@ -33,6 +33,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: action-test
+    needs: sonarcloud
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
