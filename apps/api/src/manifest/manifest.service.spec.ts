@@ -13,7 +13,7 @@ import {
   validManifest,
   validManifestBase64,
   validManifestForWebhookValueTransform,
-} from './fixtures/manifest-schema-test';
+} from './fixtures/manifest-schema.fixture';
 import Ajv from 'ajv';
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { MockFactory } from 'mockingbird';
