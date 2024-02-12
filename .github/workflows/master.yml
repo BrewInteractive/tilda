@@ -5,7 +5,7 @@ on:
       - main
  
 jobs:
-  publish:
+  sonarcloud:
     runs-on: ubuntu-latest
     environment: action-test
     env:
@@ -30,7 +30,10 @@ jobs:
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
-
+  publish:
+    runs-on: ubuntu-latest
+    environment: action-test
+    steps:
       - name: Git Checkout
         uses: actions/checkout@v4
 
