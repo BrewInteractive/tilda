@@ -4,6 +4,7 @@ import { EmailModule } from '../email/email.module';
 import { ConfigModule } from '@nestjs/config';
 import { MockFactory } from 'mockingbird';
 import { ConfigurationFixture } from '../../test/fixtures';
+import { HookModule } from '../hook/hook.module';
 
 describe('QueueModule', () => {
   let module: TestingModule;
@@ -14,6 +15,7 @@ describe('QueueModule', () => {
       imports: [
         QueueModule,
         EmailModule,
+        HookModule,
         ConfigModule.forRoot({
           isGlobal: true,
           load: [() => mockConfig],

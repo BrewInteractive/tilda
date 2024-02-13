@@ -1,14 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueueService } from './queue.service';
-import axios from 'axios';
-import { PostHookRequestFixture } from '../../test/fixtures';
-import { MockFactory } from 'mockingbird';
 import { faker } from '@faker-js/faker';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
-
-jest.mock('axios');
-const mockAxios = axios as jest.MockedFunction<typeof axios>;
 
 describe('QueueService', () => {
   let queueService: QueueService;
@@ -37,28 +31,6 @@ describe('QueueService', () => {
     queueService = module.get<QueueService>(QueueService);
     emailService = module.get<EmailService>('EmailService');
     configService = module.get<ConfigService>(ConfigService);
-  });
-
-  it('should send webhook successfully', async () => {
-    const mockResponse = {
-      data: faker.string.alpha(),
-      status: 200,
-    };
-    mockAxios.mockResolvedValueOnce(mockResponse);
-    const postHookRequest = MockFactory(PostHookRequestFixture).one();
-
-    const result = await queueService.sendWebhookAsync(postHookRequest);
-
-    expect(result).toEqual({ success: true });
-  });
-
-  it('should handle error during webhook send', async () => {
-    mockAxios.mockRejectedValueOnce(new Error('ERROR'));
-    const postHookRequest = MockFactory(PostHookRequestFixture).one();
-
-    await expect(
-      queueService.sendWebhookAsync(postHookRequest),
-    ).rejects.toThrow('ERROR');
   });
 
   it('should send emails for each recipient', async () => {

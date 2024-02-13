@@ -7,10 +7,12 @@ import { SendEmailQueue } from './send-email.queue';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueService } from './queue.service';
 import { EmailModule } from '../email/email.module';
+import { HookModule } from '../hook/hook.module';
 
 @Module({
   imports: [
     EmailModule,
+    HookModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

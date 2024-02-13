@@ -1,22 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostHookQueue } from './post-hook.queue';
-import { QueueService } from './queue.service';
 import { MockFactory } from 'mockingbird';
 import { PostHookRequestFixture } from '../../test/fixtures';
+import { HookService } from '../hook/hook.service';
 
-jest.mock('./queue.service');
+jest.mock('../hook/hook.service');
 
 describe('PostHookQueue', () => {
   let postHookQueue: PostHookQueue;
-  let queueService: QueueService;
+  let hookService: HookService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PostHookQueue, QueueService],
+      providers: [PostHookQueue, HookService],
     }).compile();
 
     postHookQueue = module.get<PostHookQueue>(PostHookQueue);
-    queueService = module.get<QueueService>(QueueService);
+    hookService = module.get<HookService>(HookService);
   });
 
   describe('processPostHook', () => {
@@ -25,7 +25,7 @@ describe('PostHookQueue', () => {
 
       await postHookQueue.processPostHook({ data: postHookRequest });
 
-      expect(queueService.sendWebhookAsync).toHaveBeenCalledWith(
+      expect(hookService.sendWebhookAsync).toHaveBeenCalledWith(
         postHookRequest,
       );
     });
