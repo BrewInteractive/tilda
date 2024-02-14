@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostHookQueue } from './post-hook.queue';
 import { MockFactory } from 'mockingbird';
-import { PostHookRequestFixture } from '../../test/fixtures';
+import { WebHookRequestFixture } from '../../test/fixtures';
 import { HookService } from '../hook/hook.service';
 
 jest.mock('../hook/hook.service');
@@ -21,7 +21,7 @@ describe('PostHookQueue', () => {
 
   describe('processPostHook', () => {
     it('should call sendWebhookAsync with job data', async () => {
-      const postHookRequest = MockFactory(PostHookRequestFixture).one();
+      const postHookRequest = MockFactory(WebHookRequestFixture).one();
 
       await postHookQueue.processPostHook({ data: postHookRequest });
 

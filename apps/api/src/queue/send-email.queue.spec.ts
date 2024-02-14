@@ -1,21 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SendEmailQueue } from './send-email.queue';
-import { QueueService } from './queue.service';
+import { HookService } from '../hook/hook.service';
 import { faker } from '@faker-js/faker';
 
-jest.mock('./queue.service');
+jest.mock('../hook/hook.service');
 
 describe('SendEmailQueue', () => {
   let sendEmailQueue: SendEmailQueue;
-  let queueService: QueueService;
+  let hookService: HookService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SendEmailQueue, QueueService],
+      providers: [SendEmailQueue, HookService],
     }).compile();
 
     sendEmailQueue = module.get<SendEmailQueue>(SendEmailQueue);
-    queueService = module.get<QueueService>(QueueService);
+    hookService = module.get<HookService>(HookService);
   });
 
   describe('processSendEmail', () => {
@@ -30,7 +30,7 @@ describe('SendEmailQueue', () => {
 
       await sendEmailQueue.processSendEmail({ data: jobData });
 
-      expect(queueService.sendEmailAsync).toHaveBeenCalledWith(jobData);
+      expect(hookService.sendEmailAsync).toHaveBeenCalledWith(jobData);
     });
   });
 });

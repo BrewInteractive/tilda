@@ -5,14 +5,13 @@ import { ExpressAdapter } from '@bull-board/express';
 import { PostHookQueue } from './post-hook.queue';
 import { SendEmailQueue } from './send-email.queue';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { QueueService } from './queue.service';
-import { EmailModule } from '../email/email.module';
 import { HookModule } from '../hook/hook.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
-    EmailModule,
     HookModule,
+    EmailModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -28,6 +27,6 @@ import { HookModule } from '../hook/hook.module';
       adapter: ExpressAdapter,
     }),
   ],
-  providers: [PostHookQueue, SendEmailQueue, QueueService],
+  providers: [PostHookQueue, SendEmailQueue],
 })
 export class QueueModule {}

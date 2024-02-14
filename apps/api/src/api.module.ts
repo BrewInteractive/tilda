@@ -6,7 +6,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ValidationModule } from './validation/validation.module';
 import config from '../src/config/configuration';
 import { QueueModule } from './queue/queue.module';
-import { HookService } from './hook/hook.service';
 import { HookModule } from './hook/hook.module';
 
 @Module({
@@ -21,6 +20,6 @@ import { HookModule } from './hook/hook.module';
     HookModule,
   ],
   controllers: [ApiController],
-  providers: [ApiService, HookService],
+  providers: [ApiService],
 })
 export class ApiModule {}

@@ -1,10 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { PostHookRequest } from './models';
+import { EmailRequest, WebHookRequest } from './models';
+import { EmailService } from '../email/email.service';
+import { ConfigService } from '@nestjs/config';
+import { Email } from '../email/dto/email.dto';
 
 @Injectable()
 export class HookService {
-  async sendWebhookAsync(params: PostHookRequest): Promise<any> {
+  constructor(
+    @Inject('EmailService') private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async sendWebhookAsync(params: WebHookRequest): Promise<any> {
     try {
       const { url, headers, method, values } = params;
 
@@ -27,6 +35,22 @@ export class HookService {
       } else {
         console.error('Eror Message:', error.message);
         throw error;
+      }
+    }
+  }
+  async sendEmailAsync(params: EmailRequest): Promise<any> {
+    for (const recipient of params.recipients) {
+      const recipientEmail = recipient['email:enc'];
+
+      if (recipientEmail) {
+        const email = {
+          from: this.configService.get('SMTP.AUTH.USER'),
+          to: recipientEmail,
+          subject: 'Hello World',
+          text: 'Hello World',
+        } as Email;
+
+        this.emailService.sendEmailAsync(email);
       }
     }
   }
