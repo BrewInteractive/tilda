@@ -1,6 +1,6 @@
 import { Mock } from 'mockingbird';
 
-export class PostHookRequestFixture {
+export class WebHookRequestFixture {
   @Mock((faker) => faker.internet.url())
   url: string;
 

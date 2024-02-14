@@ -1,4 +1,4 @@
-export class PostHookRequest {
+export class WebHookRequest {
   url: string;
   headers?: { [key: string]: string };
   method: string;

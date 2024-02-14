@@ -1,12 +1,12 @@
 import { Process, Processor } from '@nestjs/bull';
-import { QueueService } from './queue.service';
+import { HookService } from '../hook/hook.service';
 
 @Processor('post-hook')
 export class PostHookQueue {
-  constructor(private readonly queueService: QueueService) {}
+  constructor(private readonly hookService: HookService) {}
 
   @Process()
   async processPostHook(job) {
-    await this.queueService.sendWebhookAsync(job.data);
+    await this.hookService.sendWebhookAsync(job.data);
   }
 }

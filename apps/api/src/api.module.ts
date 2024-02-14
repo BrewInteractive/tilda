@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ValidationModule } from './validation/validation.module';
 import config from '../src/config/configuration';
 import { QueueModule } from './queue/queue.module';
+import { HookModule } from './hook/hook.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { QueueModule } from './queue/queue.module';
       load: [config],
     }),
     ValidationModule,
+    HookModule,
   ],
   controllers: [ApiController],
   providers: [ApiService],

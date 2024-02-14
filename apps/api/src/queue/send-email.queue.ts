@@ -1,12 +1,12 @@
 import { Process, Processor } from '@nestjs/bull';
-import { QueueService } from './queue.service';
+import { HookService } from '../hook/hook.service';
 
 @Processor('send-email')
 export class SendEmailQueue {
-  constructor(private readonly queueService: QueueService) {}
+  constructor(private readonly hookService: HookService) {}
 
   @Process()
   async processSendEmail(job) {
-    this.queueService.sendEmailAsync(job.data);
+    this.hookService.sendEmailAsync(job.data);
   }
 }

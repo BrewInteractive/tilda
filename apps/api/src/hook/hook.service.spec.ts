@@ -1,24 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QueueService } from './queue.service';
 import axios from 'axios';
-import { PostHookRequestFixture } from '../../test/fixtures';
+import { WebHookRequestFixture } from '../../test/fixtures';
 import { MockFactory } from 'mockingbird';
 import { faker } from '@faker-js/faker';
-import { ConfigService } from '@nestjs/config';
+import { HookService } from './hook.service';
 import { EmailService } from '../email/email.service';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('axios');
 const mockAxios = axios as jest.MockedFunction<typeof axios>;
 
-describe('QueueService', () => {
-  let queueService: QueueService;
+describe('HookService', () => {
+  let hookService: HookService;
   let emailService: EmailService;
   let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        QueueService,
+        HookService,
         {
           provide: 'EmailService',
           useValue: {
@@ -34,7 +34,7 @@ describe('QueueService', () => {
       ],
     }).compile();
 
-    queueService = module.get<QueueService>(QueueService);
+    hookService = module.get<HookService>(HookService);
     emailService = module.get<EmailService>('EmailService');
     configService = module.get<ConfigService>(ConfigService);
   });
@@ -45,20 +45,20 @@ describe('QueueService', () => {
       status: 200,
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
-    const postHookRequest = MockFactory(PostHookRequestFixture).one();
+    const webHookRequest = MockFactory(WebHookRequestFixture).one();
 
-    const result = await queueService.sendWebhookAsync(postHookRequest);
+    const result = await hookService.sendWebhookAsync(webHookRequest);
 
     expect(result).toEqual({ success: true });
   });
 
   it('should handle error during webhook send', async () => {
     mockAxios.mockRejectedValueOnce(new Error('ERROR'));
-    const postHookRequest = MockFactory(PostHookRequestFixture).one();
+    const webHookRequest = MockFactory(WebHookRequestFixture).one();
 
-    await expect(
-      queueService.sendWebhookAsync(postHookRequest),
-    ).rejects.toThrow('ERROR');
+    await expect(hookService.sendWebhookAsync(webHookRequest)).rejects.toThrow(
+      'ERROR',
+    );
   });
 
   it('should send emails for each recipient', async () => {
@@ -73,7 +73,7 @@ describe('QueueService', () => {
       ],
     };
 
-    await queueService.sendEmailAsync(emailRequest);
+    await hookService.sendEmailAsync(emailRequest);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
@@ -101,7 +101,7 @@ describe('QueueService', () => {
       ],
     };
 
-    await queueService.sendEmailAsync(emailRequest);
+    await hookService.sendEmailAsync(emailRequest);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(1);
