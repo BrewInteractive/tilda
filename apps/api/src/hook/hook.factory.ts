@@ -4,7 +4,10 @@ import { EmailProcessor } from './email.processor';
 import { WebhookProcessor } from './webhook.processor';
 import { HookType } from '../models/hooks/hook-type.enum';
 export class HookFactory {
-  static hook = new Map<HookType, (hookService: HookService) => HookInterface>([
+  static readonly hook = new Map<
+    HookType,
+    (hookService: HookService) => HookInterface
+  >([
     [
       HookType.email,
       (hookService: HookService) => new EmailProcessor(hookService),
