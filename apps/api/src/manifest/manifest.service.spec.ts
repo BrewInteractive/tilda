@@ -19,14 +19,9 @@ describe('ManifestService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        BullModule.registerQueue(
-          {
-            name: 'post-hook',
-          },
-          {
-            name: 'send-email',
-          },
-        ),
+        BullModule.registerQueue({
+          name: 'hook-queue',
+        }),
       ],
       providers: [
         ManifestService,
@@ -39,9 +34,7 @@ describe('ManifestService', () => {
         { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
       ],
     })
-      .overrideProvider(getQueueToken('post-hook'))
-      .useValue(queueMock)
-      .overrideProvider(getQueueToken('send-email'))
+      .overrideProvider(getQueueToken('hook-queue'))
       .useValue(queueMock)
       .compile();
 
@@ -174,10 +167,10 @@ describe('ManifestService', () => {
     const emailHookFixture = MockFactory(EmailHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
 
-    await manifestService.handlePostHooks(hooks);
+    await manifestService.handleQueueHooks(hooks);
 
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[0].params);
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[1].params);
+    expect(queueMock.add).toHaveBeenCalledWith(hooks[0]);
+    expect(queueMock.add).toHaveBeenCalledWith(hooks[1]);
   });
 
   describe('Validate Manifest', () => {

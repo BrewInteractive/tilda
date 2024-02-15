@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
-import { PostHookQueue } from './post-hook.queue';
-import { SendEmailQueue } from './send-email.queue';
+import { HookQueue } from './hook.queue';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HookModule } from '../hook/hook.module';
 import { EmailModule } from '../email/email.module';
@@ -27,6 +26,6 @@ import { EmailModule } from '../email/email.module';
       adapter: ExpressAdapter,
     }),
   ],
-  providers: [PostHookQueue, SendEmailQueue],
+  providers: [HookQueue],
 })
 export class QueueModule {}

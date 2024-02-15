@@ -23,17 +23,12 @@ export class ManifestService {
     private httpService: HttpService,
     @Inject('Ajv')
     private readonly ajv: Ajv,
-    @InjectQueue('post-hook') private readonly postHookQueue: Queue,
-    @InjectQueue('send-email') private readonly sendEmailQueue: Queue,
+    @InjectQueue('hook-queue') private readonly hookQueue: Queue,
   ) {}
 
-  async handlePostHooks(hooks: Hook[]): Promise<void> {
+  async handleQueueHooks(hooks: Hook[]): Promise<void> {
     for (const hook of hooks) {
-      if (hook.factory === 'webhook') {
-        await this.postHookQueue.add(hook.params);
-      } else if (hook.factory === 'email') {
-        await this.sendEmailQueue.add(hook.params);
-      }
+      await this.hookQueue.add(hook);
     }
   }
   async getManifest(

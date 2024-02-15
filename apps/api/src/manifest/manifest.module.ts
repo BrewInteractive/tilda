@@ -11,24 +11,13 @@ import { BullAdapter } from '@bull-board/api/bullAdapter';
   imports: [
     HttpModule,
     ValidationModule,
-    BullModule.registerQueue(
-      {
-        name: 'post-hook',
-      },
-      {
-        name: 'send-email',
-      },
-    ),
-    BullBoardModule.forFeature(
-      {
-        name: 'post-hook',
-        adapter: BullAdapter,
-      },
-      {
-        name: 'send-email',
-        adapter: BullAdapter,
-      },
-    ),
+    BullModule.registerQueue({
+      name: 'hook-queue',
+    }),
+    BullBoardModule.forFeature({
+      name: 'hook-queue',
+      adapter: BullAdapter,
+    }),
   ],
   providers: [
     ManifestService,

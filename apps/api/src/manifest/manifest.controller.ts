@@ -123,7 +123,7 @@ export class ManifestController {
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
 
-      await this.manifestService.handlePostHooks(
+      await this.manifestService.handleQueueHooks(
         manifestResponse.data.hooks.post,
       );
 

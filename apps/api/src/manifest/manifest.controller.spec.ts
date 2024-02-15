@@ -40,14 +40,9 @@ describe('ManifestController', () => {
       controllers: [ManifestController],
       imports: [
         ValidationModule,
-        BullModule.registerQueue(
-          {
-            name: 'post-hook',
-          },
-          {
-            name: 'send-email',
-          },
-        ),
+        BullModule.registerQueue({
+          name: 'hook-queue',
+        }),
       ],
       providers: [
         ValidationService,
@@ -169,7 +164,7 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
     jest
-      .spyOn(manifestService, 'handlePostHooks')
+      .spyOn(manifestService, 'handleQueueHooks')
       .mockImplementation(async () => {});
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
@@ -203,7 +198,7 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(false);
     jest
-      .spyOn(manifestService, 'handlePostHooks')
+      .spyOn(manifestService, 'handleQueueHooks')
       .mockImplementation(async () => {});
     const mockResponse = {
       status: jest.fn().mockReturnThis(),
