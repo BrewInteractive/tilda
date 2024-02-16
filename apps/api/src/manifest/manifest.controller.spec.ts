@@ -164,7 +164,7 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
     jest
-      .spyOn(manifestService, 'handleQueueHooks')
+      .spyOn(manifestService, 'handlePostHooks')
       .mockImplementation(async () => {});
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
@@ -198,7 +198,7 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(false);
     jest
-      .spyOn(manifestService, 'handleQueueHooks')
+      .spyOn(manifestService, 'handlePostHooks')
       .mockImplementation(async () => {});
     const mockResponse = {
       status: jest.fn().mockReturnThis(),

@@ -167,7 +167,7 @@ describe('ManifestService', () => {
     const emailHookFixture = MockFactory(EmailHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
 
-    await manifestService.handleQueueHooks(hooks);
+    await manifestService.handlePostHooks(hooks);
 
     expect(queueMock.add).toHaveBeenCalledWith(hooks[0]);
     expect(queueMock.add).toHaveBeenCalledWith(hooks[1]);

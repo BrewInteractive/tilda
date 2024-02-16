@@ -26,7 +26,7 @@ export class ManifestService {
     @InjectQueue('hook-queue') private readonly hookQueue: Queue,
   ) {}
 
-  async handleQueueHooks(hooks: Hook[]): Promise<void> {
+  async handlePostHooks(hooks: Hook[]): Promise<any> {
     for (const hook of hooks) {
       await this.hookQueue.add(hook);
     }
