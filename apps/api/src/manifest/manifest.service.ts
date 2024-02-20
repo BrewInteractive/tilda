@@ -16,6 +16,8 @@ import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { HookService } from '../hook/hook.service';
+import { HookFactory } from '../hook/hook.factory';
 
 @Injectable()
 export class ManifestService {
@@ -24,12 +26,25 @@ export class ManifestService {
     @Inject('Ajv')
     private readonly ajv: Ajv,
     @InjectQueue('hook-queue') private readonly hookQueue: Queue,
+    private readonly hookService: HookService,
   ) {}
 
   async handlePostHooks(hooks: Hook[]): Promise<any> {
     for (const hook of hooks) {
       await this.hookQueue.add(hook);
     }
+  }
+  async handlePreHooks(hooks: Hook[]): Promise<any> {
+    const preHookResult = [];
+    for (const hook of hooks) {
+      const { factory, params } = hook;
+      const result = await HookFactory.getHook(
+        factory,
+        this.hookService,
+      ).execute(params);
+      preHookResult.push(result);
+    }
+    return preHookResult;
   }
   async getManifest(
     manifestInput: ManifestRequest,

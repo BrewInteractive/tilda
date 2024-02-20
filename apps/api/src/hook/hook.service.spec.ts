@@ -43,13 +43,14 @@ describe('HookService', () => {
     const mockResponse = {
       data: faker.string.alpha(),
       status: 200,
+      headers: { 'content-type': 'application/json' },
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
     const webHookRequest = MockFactory(WebHookRequestFixture).one();
 
     const result = await hookService.sendWebhookAsync(webHookRequest);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ response: mockResponse });
   });
 
   it('should handle error during webhook send', async () => {

@@ -10,13 +10,19 @@ import { MockFactory } from 'mockingbird';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { HookService } from '../hook/hook.service';
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
   let httpService: HttpService;
   const queueMock = { add: jest.fn() };
+  let hookServiceMock: Partial<HookService>;
 
   beforeEach(async () => {
+    hookServiceMock = {
+      sendEmailAsync: jest.fn(),
+      sendWebhookAsync: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         BullModule.registerQueue({
@@ -25,6 +31,10 @@ describe('ManifestService', () => {
       ],
       providers: [
         ManifestService,
+        {
+          provide: HookService,
+          useValue: hookServiceMock,
+        },
         {
           provide: HttpService,
           useValue: {
