@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import axios from 'axios';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { WebHookRequestFixture } from '../../test/fixtures';
 import { MockFactory } from 'mockingbird';
 import { faker } from '@faker-js/faker';
@@ -62,6 +62,43 @@ describe('HookService', () => {
     );
   });
 
+  it('should handle error during webhook send', async () => {
+    const headers = new AxiosHeaders();
+
+    const errorMock: AxiosError = new AxiosError('Axios error') as AxiosError;
+    errorMock.name = 'AxiosError';
+    errorMock.code = '500';
+    errorMock.request = {};
+    errorMock.response = {
+      status: 500,
+      statusText: 'Axios error',
+      headers: { 'content-type': 'application/json' },
+      config: { headers: headers },
+      data: { errors: [{ detail: 'Internal Server Error' }] },
+    };
+    errorMock.isAxiosError = true;
+    errorMock.toJSON = jest.fn();
+    mockAxios.mockRejectedValueOnce(errorMock);
+
+    const webHookRequest = MockFactory(WebHookRequestFixture).one();
+
+    try {
+      await hookService.sendWebhookAsync(webHookRequest);
+    } catch (error) {
+      expect(error).toBeInstanceOf(AxiosError);
+      expect(error.response.status).toBe(500);
+      expect(error.response.headers).toEqual({
+        'content-type': 'application/json',
+      });
+      expect(error.response.data).toEqual({
+        errors: [{ detail: 'Internal Server Error' }],
+      });
+      expect(console.error).toHaveBeenCalledWith(
+        'Error Message:',
+        'Axios error',
+      );
+    }
+  });
   it('should send emails for each recipient', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();

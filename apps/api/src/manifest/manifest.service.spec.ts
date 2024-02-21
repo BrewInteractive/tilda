@@ -11,6 +11,9 @@ import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { HookService } from '../hook/hook.service';
+import { HookFactory } from '../hook/hook.factory';
+
+jest.mock('../hook/hook.factory');
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
@@ -172,7 +175,7 @@ describe('ManifestService', () => {
     );
   });
 
-  it('should add both hooks to their respective queues', async () => {
+  it('should add both post hooks to their respective queues', async () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
     const emailHookFixture = MockFactory(EmailHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
@@ -181,6 +184,32 @@ describe('ManifestService', () => {
 
     expect(queueMock.add).toHaveBeenCalledWith(hooks[0]);
     expect(queueMock.add).toHaveBeenCalledWith(hooks[1]);
+  });
+  it('should send webhook successfully', async () => {
+    const webHookFixture = MockFactory(WebHookFixture).one();
+    const hooks: Hook[] = [{ ...webHookFixture }];
+
+    const mockResponse = {
+      response: {
+        status: 200,
+        headers: [],
+        data: {},
+      },
+    };
+    const mockExecute = jest.fn();
+    (HookFactory.getHook as jest.Mock).mockReturnValue({
+      execute: mockExecute,
+    });
+    mockExecute.mockResolvedValue(mockResponse);
+
+    const result = await manifestService.handlePreHooks(hooks);
+
+    expect(result).toEqual([mockResponse]);
+    expect(HookFactory.getHook).toHaveBeenCalledWith('webhook', {
+      sendWebhookAsync: hookServiceMock.sendWebhookAsync,
+      sendEmailAsync: hookServiceMock.sendEmailAsync,
+    });
+    expect(mockExecute).toHaveBeenCalledWith(hooks[0].params);
   });
 
   describe('Validate Manifest', () => {
