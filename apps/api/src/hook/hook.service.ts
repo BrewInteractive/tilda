@@ -61,23 +61,12 @@ export class HookService {
       }
     }
   }
-  async sendEmailAsync(params: EmailRequest, dataWithUi?: any): Promise<any> {
+  async sendEmailAsync(params: EmailRequest, dataWithUi?: any): Promise<void> {
     for (const recipient of params.recipients) {
       const recipientEmail = recipient['email:enc'];
 
       if (recipientEmail) {
-        let htmlContent = '<html><body>';
-
-        if (dataWithUi)
-          for (const obj of dataWithUi) {
-            for (const key in obj) {
-              if (obj.hasOwnProperty(key)) {
-                htmlContent += `<p>${key}: ${obj[key]}</p>`;
-              }
-            }
-          }
-
-        htmlContent += '</body></html>';
+        const htmlContent = this.generateHtmlContent(dataWithUi);
 
         const email = {
           from: this.configService.get('SMTP.AUTH.USER'),
@@ -86,8 +75,24 @@ export class HookService {
           html: htmlContent,
         } as Email;
 
-        await this.emailService.sendEmailAsync(email);
+        this.emailService.sendEmailAsync(email);
       }
     }
+  }
+  private generateHtmlContent(dataWithUi?: any): string {
+    let htmlContent = '<html><body>';
+
+    if (dataWithUi) {
+      for (const obj of dataWithUi) {
+        for (const key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            htmlContent += `<p>${key}: ${obj[key]}</p>`;
+          }
+        }
+      }
+    }
+
+    htmlContent += '</body></html>';
+    return htmlContent;
   }
 }

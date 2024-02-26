@@ -201,7 +201,7 @@ export class ManifestService {
     };
 
     Object.entries(valuesCopy).forEach(([key, value]) => {
-      const originalValue = value as string;
+      const originalValue = value;
       const matches = originalValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
       if (matches) {
         let transformedValue = originalValue;
