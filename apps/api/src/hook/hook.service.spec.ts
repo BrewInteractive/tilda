@@ -111,17 +111,51 @@ describe('HookService', () => {
       ],
     };
 
-    await hookService.sendEmailAsync(emailRequest);
+    await hookService.sendEmailAsync(emailRequest, undefined);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
     const expectedEmail = {
       from: fromEmail,
-      subject: 'Hello World',
-      text: 'Hello World',
+      subject: 'Tilda Run For Validation Result',
+      html: '<html><body></body></html>',
     };
 
+    expect(sendEmailSpy).toHaveBeenCalledWith(
+      expect.objectContaining(expectedEmail),
+    );
+  });
+
+  it('should send emails for each recipient with ui labels', async () => {
+    const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
+    const fromEmail = faker.internet.email();
+    jest.spyOn(configService, 'get').mockReturnValue(fromEmail);
+
+    const emailRequest = {
+      recipients: [
+        { 'email:enc': faker.internet.email() },
+        { 'email:enc': faker.internet.email() },
+      ],
+    };
+    const dataWithUi = [
+      {
+        name: faker.person.firstName(),
+      },
+      {
+        surname: faker.person.lastName(),
+      },
+    ];
+    await hookService.sendEmailAsync(emailRequest, dataWithUi);
+
+    expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
+    expect(sendEmailSpy).toHaveBeenCalledTimes(2);
+
+    const expectedEmail = {
+      from: fromEmail,
+      subject: 'Tilda Run For Validation Result',
+      html: `<html><body><p>name: ${dataWithUi[0].name}</p><p>surname: ${dataWithUi[1].surname}</p></body></html>`,
+    };
     expect(sendEmailSpy).toHaveBeenCalledWith(
       expect.objectContaining(expectedEmail),
     );

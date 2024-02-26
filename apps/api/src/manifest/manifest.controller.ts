@@ -124,6 +124,10 @@ export class ManifestController {
       }
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+      const dataWithUi = this.manifestService.getDataWithUiLabels(
+        manifestResponse,
+        payload,
+      );
 
       const preHooksResult = await this.manifestService.handlePreHooks(
         manifestResponse.data.hooks.pre,
@@ -140,6 +144,7 @@ export class ManifestController {
 
       await this.manifestService.handlePostHooks(
         manifestResponse.data.hooks.post,
+        dataWithUi,
       );
 
       return res.status(HttpStatus.OK).json(validationResult);

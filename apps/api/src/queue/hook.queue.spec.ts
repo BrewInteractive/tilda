@@ -31,13 +31,15 @@ describe('HookQueue', () => {
   it('should process email hook with correct factory and params', async () => {
     const job = {
       data: {
-        factory: 'email',
-        params: {
-          recipients: [
-            {
-              'email:enc': faker.internet.email(),
-            },
-          ],
+        hook: {
+          factory: 'email',
+          params: {
+            recipients: [
+              {
+                'email:enc': faker.internet.email(),
+              },
+            ],
+          },
         },
       },
     };
@@ -45,18 +47,52 @@ describe('HookQueue', () => {
     await hookQueue.processHook(job);
 
     expect(hookServiceMock.sendEmailAsync).toHaveBeenCalledWith(
-      job.data.params,
+      job.data.hook.params,
+      undefined,
     );
   });
 
+  it('should process email hook with correct factory and params with ui labels', async () => {
+    const job = {
+      data: {
+        hook: {
+          factory: 'email',
+          params: {
+            recipients: [
+              {
+                'email:enc': faker.internet.email(),
+              },
+            ],
+          },
+        },
+        dataWithUi: [
+          {
+            name: faker.person.firstName(),
+          },
+          {
+            surname: faker.person.lastName(),
+          },
+        ],
+      },
+    };
+
+    await hookQueue.processHook(job);
+
+    expect(hookServiceMock.sendEmailAsync).toHaveBeenCalledWith(
+      job.data.hook.params,
+      job.data.dataWithUi,
+    );
+  });
   it('should process webhook hook with correct factory and params', async () => {
     const webHookParams = MockFactory(WebHookRequestFixture).one();
 
     const job = {
       data: {
-        factory: 'webhook',
-        params: {
-          ...webHookParams,
+        hook: {
+          factory: 'webhook',
+          params: {
+            ...webHookParams,
+          },
         },
       },
     };
@@ -64,20 +100,22 @@ describe('HookQueue', () => {
     await hookQueue.processHook(job);
 
     expect(hookServiceMock.sendWebhookAsync).toHaveBeenCalledWith(
-      job.data.params,
+      job.data.hook.params,
     );
   });
 
   it('should process webhook hook with wrong factory and params', async () => {
     const job = {
       data: {
-        factory: 'wrong-factory',
-        params: {},
+        hook: {
+          factory: 'wrong-factory',
+          params: {},
+        },
       },
     };
 
     await expect(hookQueue.processHook(job)).rejects.toThrow(
-      `Unsupported hook type: ${job.data.factory}`,
+      `Unsupported hook type: ${job.data.hook.factory}`,
     );
   });
 });

@@ -1,3 +1,3 @@
 export interface HookInterface {
-  execute(params: any): Promise<any>;
+  execute(params: any, dataWithUi?: any): Promise<any>;
 }

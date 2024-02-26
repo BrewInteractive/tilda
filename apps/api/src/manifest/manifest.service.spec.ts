@@ -179,11 +179,34 @@ describe('ManifestService', () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
     const emailHookFixture = MockFactory(EmailHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
-
     await manifestService.handlePostHooks(hooks);
 
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[0]);
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[1]);
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[0],
+      dataWithUi: undefined,
+    });
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[1],
+      dataWithUi: undefined,
+    });
+  });
+  it('should add email post hooks to their respective queues with ui labels', async () => {
+    const emailHookFixture = MockFactory(EmailHookFixture).one();
+    const hooks: Hook[] = [{ ...emailHookFixture }];
+    const dataWithUi = [
+      {
+        name: faker.person.firstName(),
+      },
+      {
+        surname: faker.person.lastName(),
+      },
+    ];
+    await manifestService.handlePostHooks(hooks, dataWithUi);
+
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[0],
+      dataWithUi,
+    });
   });
   it('should send webhook successfully', async () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
@@ -343,7 +366,8 @@ describe('ManifestService', () => {
     validManifest.data.fields['surname'].const['constName2:enc'] =
       'encrypted value';
     (validManifest.data.hooks.pre[0].params as WebhookParams).values = {
-      nameSurname: '{$.fields.name.value} {$.fields.surname.value}',
+      nameSurname:
+        'Name: {$.fields.name.value} Surname: {$.fields.surname.value}',
       nameConstValue: '{$.fields.name.const.constName1.value}',
       surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
     };
@@ -467,7 +491,7 @@ describe('ManifestService', () => {
       };
 
       const expectedValues = {
-        nameSurname: name + ' ' + surname,
+        nameSurname: 'Name: ' + name + ' Surname: ' + surname,
         nameConstValue: 'const value',
         surnameConstEncValue: '',
       };
@@ -478,6 +502,33 @@ describe('ManifestService', () => {
       );
 
       expect(transformedPatternValues).toEqual(expectedValues);
+    });
+    it('should generate the correct all key values with inputName', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifest),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+      const payload = {
+        surname,
+        testName: name,
+      };
+
+      const expectedOutput = [
+        {
+          [manifest.data.fields['surname'].ui.label]: surname,
+        },
+        {
+          [manifest.data.fields['name'].ui.label]: name,
+        },
+      ];
+
+      const generatedKeyValues = manifestService.getDataWithUiLabels(
+        manifest as TildaManifest,
+        payload,
+      );
+
+      expect(generatedKeyValues).toEqual(expectedOutput);
     });
   });
 });

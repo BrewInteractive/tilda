@@ -61,19 +61,32 @@ export class HookService {
       }
     }
   }
-  async sendEmailAsync(params: EmailRequest): Promise<any> {
+  async sendEmailAsync(params: EmailRequest, dataWithUi?: any): Promise<any> {
     for (const recipient of params.recipients) {
       const recipientEmail = recipient['email:enc'];
 
       if (recipientEmail) {
+        let htmlContent = '<html><body>';
+
+        if (dataWithUi)
+          for (const obj of dataWithUi) {
+            for (const key in obj) {
+              if (obj.hasOwnProperty(key)) {
+                htmlContent += `<p>${key}: ${obj[key]}</p>`;
+              }
+            }
+          }
+
+        htmlContent += '</body></html>';
+
         const email = {
           from: this.configService.get('SMTP.AUTH.USER'),
           to: recipientEmail,
-          subject: 'Hello World',
-          text: 'Hello World',
+          subject: 'Tilda Run For Validation Result',
+          html: htmlContent,
         } as Email;
 
-        this.emailService.sendEmailAsync(email);
+        await this.emailService.sendEmailAsync(email);
       }
     }
   }

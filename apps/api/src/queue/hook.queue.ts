@@ -8,8 +8,11 @@ export class HookQueue {
 
   @Process()
   async processHook(job) {
-    const { factory, params } = job.data;
+    const { factory, params } = job.data.hook;
 
-    await HookFactory.getHook(factory, this.hookService).execute(params);
+    await HookFactory.getHook(factory, this.hookService).execute(
+      params,
+      job.data.dataWithUi,
+    );
   }
 }

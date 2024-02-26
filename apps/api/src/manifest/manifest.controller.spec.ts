@@ -192,6 +192,9 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
     jest
+      .spyOn(manifestService, 'getDataWithUiLabels')
+      .mockReturnValue(undefined);
+    jest
       .spyOn(manifestService, 'handlePostHooks')
       .mockResolvedValue(async () => {});
     jest
