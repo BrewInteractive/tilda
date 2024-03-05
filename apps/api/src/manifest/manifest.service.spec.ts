@@ -10,26 +10,34 @@ import { MockFactory } from 'mockingbird';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { HookService } from '../hook/hook.service';
+import { HookFactory } from '../hook/hook.factory';
+
+jest.mock('../hook/hook.factory');
 
 describe('ManifestService', () => {
   let manifestService: ManifestService;
   let httpService: HttpService;
   const queueMock = { add: jest.fn() };
+  let hookServiceMock: Partial<HookService>;
 
   beforeEach(async () => {
+    hookServiceMock = {
+      sendEmailAsync: jest.fn(),
+      sendWebhookAsync: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        BullModule.registerQueue(
-          {
-            name: 'post-hook',
-          },
-          {
-            name: 'send-email',
-          },
-        ),
+        BullModule.registerQueue({
+          name: 'hook-queue',
+        }),
       ],
       providers: [
         ManifestService,
+        {
+          provide: HookService,
+          useValue: hookServiceMock,
+        },
         {
           provide: HttpService,
           useValue: {
@@ -39,9 +47,7 @@ describe('ManifestService', () => {
         { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
       ],
     })
-      .overrideProvider(getQueueToken('post-hook'))
-      .useValue(queueMock)
-      .overrideProvider(getQueueToken('send-email'))
+      .overrideProvider(getQueueToken('hook-queue'))
       .useValue(queueMock)
       .compile();
 
@@ -169,15 +175,64 @@ describe('ManifestService', () => {
     );
   });
 
-  it('should add both hooks to their respective queues', async () => {
+  it('should add both post hooks to their respective queues', async () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
     const emailHookFixture = MockFactory(EmailHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }, { ...emailHookFixture }];
-
     await manifestService.handlePostHooks(hooks);
 
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[0].params);
-    expect(queueMock.add).toHaveBeenCalledWith(hooks[1].params);
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[0],
+      dataWithUi: undefined,
+    });
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[1],
+      dataWithUi: undefined,
+    });
+  });
+  it('should add email post hooks to their respective queues with ui labels', async () => {
+    const emailHookFixture = MockFactory(EmailHookFixture).one();
+    const hooks: Hook[] = [{ ...emailHookFixture }];
+    const dataWithUi = [
+      {
+        name: faker.person.firstName(),
+      },
+      {
+        surname: faker.person.lastName(),
+      },
+    ];
+    await manifestService.handlePostHooks(hooks, dataWithUi);
+
+    expect(queueMock.add).toHaveBeenCalledWith({
+      hook: hooks[0],
+      dataWithUi,
+    });
+  });
+  it('should send webhook successfully', async () => {
+    const webHookFixture = MockFactory(WebHookFixture).one();
+    const hooks: Hook[] = [{ ...webHookFixture }];
+
+    const mockResponse = {
+      response: {
+        status: 200,
+        headers: [],
+        data: {},
+      },
+    };
+    const mockExecute = jest.fn();
+    (HookFactory.getHook as jest.Mock).mockReturnValue({
+      execute: mockExecute,
+    });
+    mockExecute.mockResolvedValue(mockResponse);
+
+    const result = await manifestService.handlePreHooks(hooks);
+
+    expect(result).toEqual([mockResponse]);
+    expect(HookFactory.getHook).toHaveBeenCalledWith('webhook', {
+      sendWebhookAsync: hookServiceMock.sendWebhookAsync,
+      sendEmailAsync: hookServiceMock.sendEmailAsync,
+    });
+    expect(mockExecute).toHaveBeenCalledWith(hooks[0].params);
   });
 
   describe('Validate Manifest', () => {
@@ -311,7 +366,8 @@ describe('ManifestService', () => {
     validManifest.data.fields['surname'].const['constName2:enc'] =
       'encrypted value';
     (validManifest.data.hooks.pre[0].params as WebhookParams).values = {
-      nameSurname: '{$.fields.name.value} {$.fields.surname.value}',
+      nameSurname:
+        'Name: {$.fields.name.value} Surname: {$.fields.surname.value}',
       nameConstValue: '{$.fields.name.const.constName1.value}',
       surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
     };
@@ -435,7 +491,7 @@ describe('ManifestService', () => {
       };
 
       const expectedValues = {
-        nameSurname: name + ' ' + surname,
+        nameSurname: 'Name: ' + name + ' Surname: ' + surname,
         nameConstValue: 'const value',
         surnameConstEncValue: '',
       };
@@ -446,6 +502,33 @@ describe('ManifestService', () => {
       );
 
       expect(transformedPatternValues).toEqual(expectedValues);
+    });
+    it('should generate the correct all key values with inputName', () => {
+      const manifest = JSON.parse(
+        JSON.stringify(validManifest),
+      ) as TildaManifest;
+      const name = faker.person.firstName();
+      const surname = faker.person.lastName();
+      const payload = {
+        surname,
+        testName: name,
+      };
+
+      const expectedOutput = [
+        {
+          [manifest.data.fields['surname'].ui.label]: surname,
+        },
+        {
+          [manifest.data.fields['name'].ui.label]: name,
+        },
+      ];
+
+      const generatedKeyValues = manifestService.getDataWithUiLabels(
+        manifest as TildaManifest,
+        payload,
+      );
+
+      expect(generatedKeyValues).toEqual(expectedOutput);
     });
   });
 });

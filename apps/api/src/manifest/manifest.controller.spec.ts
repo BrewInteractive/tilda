@@ -14,6 +14,7 @@ import { BullModule } from '@nestjs/bull';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { MockFactory } from 'mockingbird';
 import { EmailParams } from '../models';
+import { HookService } from '../hook/hook.service';
 
 jest.mock('../utils/crypto-helpers', () => ({
   generateHmac: jest.fn(),
@@ -23,6 +24,8 @@ describe('ManifestController', () => {
   let manifestController: ManifestController;
   let manifestService: ManifestService;
   let validationService: ValidationService;
+  let hookServiceMock: Partial<HookService>;
+
   const validManifest = MockFactory(TildaManifestFixture).one();
   const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
   encryptedValidManifest.hmac =
@@ -35,22 +38,26 @@ describe('ManifestController', () => {
     'const value';
   encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
     'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
+
   beforeEach(async () => {
+    hookServiceMock = {
+      sendEmailAsync: jest.fn(),
+      sendWebhookAsync: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ManifestController],
       imports: [
         ValidationModule,
-        BullModule.registerQueue(
-          {
-            name: 'post-hook',
-          },
-          {
-            name: 'send-email',
-          },
-        ),
+        BullModule.registerQueue({
+          name: 'hook-queue',
+        }),
       ],
       providers: [
         ValidationService,
+        {
+          provide: HookService,
+          useValue: hookServiceMock,
+        },
         {
           provide: HttpService,
           useValue: {},
@@ -160,6 +167,22 @@ describe('ManifestController', () => {
       name: faker.string.alpha(10),
       surname: faker.string.alpha(10),
     };
+    const preHookResult = [
+      {
+        response: {
+          data: faker.string.alpha(),
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      },
+      {
+        response: {
+          data: faker.string.alpha(),
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      },
+    ];
 
     jest
       .spyOn(manifestService, 'getManifest')
@@ -169,8 +192,14 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
     jest
+      .spyOn(manifestService, 'getDataWithUiLabels')
+      .mockReturnValue(undefined);
+    jest
       .spyOn(manifestService, 'handlePostHooks')
-      .mockImplementation(async () => {});
+      .mockResolvedValue(async () => {});
+    jest
+      .spyOn(manifestService, 'handlePreHooks')
+      .mockResolvedValue(preHookResult);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -186,6 +215,59 @@ describe('ManifestController', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: true,
+    });
+  });
+  it('should validate manifest and prehook failed return failed hook', async () => {
+    const mockManifestInput = {
+      url: faker.internet.url.toString(),
+      name: faker.string.alpha(10),
+      surname: faker.string.alpha(10),
+    };
+    const preHookResult = [
+      {
+        response: {
+          data: faker.string.alpha(),
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      },
+      {
+        response: {
+          data: faker.string.alpha(),
+          status: 400,
+          headers: { 'content-type': 'application/json' },
+        },
+      },
+    ];
+
+    jest
+      .spyOn(manifestService, 'getManifest')
+      .mockResolvedValue(encryptedValidManifest);
+    jest
+      .spyOn(manifestService, 'decryptManifestEncFields')
+      .mockReturnValue(encryptedValidManifest);
+    jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
+    jest
+      .spyOn(manifestService, 'handlePostHooks')
+      .mockResolvedValue(async () => {});
+    jest
+      .spyOn(manifestService, 'handlePreHooks')
+      .mockResolvedValue(preHookResult);
+    jest.spyOn(validationService, 'validate').mockReturnValue({
+      success: true,
+    });
+    (verifyHmac as jest.Mock).mockReturnValue(true);
+
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    await manifestController.validate(mockManifestInput, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      hook: { pre: preHookResult },
     });
   });
   it('should handle errors with invalid manifest', async () => {

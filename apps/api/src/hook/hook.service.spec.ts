@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import axios from 'axios';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { WebHookRequestFixture } from '../../test/fixtures';
 import { MockFactory } from 'mockingbird';
 import { faker } from '@faker-js/faker';
@@ -43,13 +43,14 @@ describe('HookService', () => {
     const mockResponse = {
       data: faker.string.alpha(),
       status: 200,
+      headers: { 'content-type': 'application/json' },
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
     const webHookRequest = MockFactory(WebHookRequestFixture).one();
 
     const result = await hookService.sendWebhookAsync(webHookRequest);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ response: mockResponse });
   });
 
   it('should handle error during webhook send', async () => {
@@ -61,6 +62,43 @@ describe('HookService', () => {
     );
   });
 
+  it('should handle error during webhook send', async () => {
+    const headers = new AxiosHeaders();
+
+    const errorMock: AxiosError = new AxiosError('Axios error') as AxiosError;
+    errorMock.name = 'AxiosError';
+    errorMock.code = '500';
+    errorMock.request = {};
+    errorMock.response = {
+      status: 500,
+      statusText: 'Axios error',
+      headers: { 'content-type': 'application/json' },
+      config: { headers: headers },
+      data: { errors: [{ detail: 'Internal Server Error' }] },
+    };
+    errorMock.isAxiosError = true;
+    errorMock.toJSON = jest.fn();
+    mockAxios.mockRejectedValueOnce(errorMock);
+
+    const webHookRequest = MockFactory(WebHookRequestFixture).one();
+
+    try {
+      await hookService.sendWebhookAsync(webHookRequest);
+    } catch (error) {
+      expect(error).toBeInstanceOf(AxiosError);
+      expect(error.response.status).toBe(500);
+      expect(error.response.headers).toEqual({
+        'content-type': 'application/json',
+      });
+      expect(error.response.data).toEqual({
+        errors: [{ detail: 'Internal Server Error' }],
+      });
+      expect(console.error).toHaveBeenCalledWith(
+        'Error Message:',
+        'Axios error',
+      );
+    }
+  });
   it('should send emails for each recipient', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();
@@ -73,17 +111,51 @@ describe('HookService', () => {
       ],
     };
 
-    await hookService.sendEmailAsync(emailRequest);
+    await hookService.sendEmailAsync(emailRequest, undefined);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
     const expectedEmail = {
       from: fromEmail,
-      subject: 'Hello World',
-      text: 'Hello World',
+      subject: 'Tilda Run For Validation Result',
+      html: '<html><body></body></html>',
     };
 
+    expect(sendEmailSpy).toHaveBeenCalledWith(
+      expect.objectContaining(expectedEmail),
+    );
+  });
+
+  it('should send emails for each recipient with ui labels', async () => {
+    const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
+    const fromEmail = faker.internet.email();
+    jest.spyOn(configService, 'get').mockReturnValue(fromEmail);
+
+    const emailRequest = {
+      recipients: [
+        { 'email:enc': faker.internet.email() },
+        { 'email:enc': faker.internet.email() },
+      ],
+    };
+    const dataWithUi = [
+      {
+        name: faker.person.firstName(),
+      },
+      {
+        surname: faker.person.lastName(),
+      },
+    ];
+    await hookService.sendEmailAsync(emailRequest, dataWithUi);
+
+    expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
+    expect(sendEmailSpy).toHaveBeenCalledTimes(2);
+
+    const expectedEmail = {
+      from: fromEmail,
+      subject: 'Tilda Run For Validation Result',
+      html: `<html><body><p>name: ${dataWithUi[0].name}</p><p>surname: ${dataWithUi[1].surname}</p></body></html>`,
+    };
     expect(sendEmailSpy).toHaveBeenCalledWith(
       expect.objectContaining(expectedEmail),
     );

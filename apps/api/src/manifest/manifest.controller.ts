@@ -105,7 +105,9 @@ export class ManifestController {
         this.manifestService.validateManifest(manifestResponse);
 
       if (!isManifestValid) {
-        res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid manifest' });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ error: 'Invalid manifest' });
       }
 
       const validationResult = this.validationService.validate(
@@ -122,12 +124,30 @@ export class ManifestController {
       }
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+      const dataWithUi = this.manifestService.getDataWithUiLabels(
+        manifestResponse,
+        payload,
+      );
+
+      const preHooksResult = await this.manifestService.handlePreHooks(
+        manifestResponse.data.hooks.pre,
+      );
+
+      if (
+        preHooksResult &&
+        preHooksResult.filter((hook) => hook.response.status != 200).length > 0
+      ) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ hook: { pre: preHooksResult } });
+      }
 
       await this.manifestService.handlePostHooks(
         manifestResponse.data.hooks.post,
+        dataWithUi,
       );
 
-      res.status(HttpStatus.OK).json(validationResult);
+      return res.status(HttpStatus.OK).json(validationResult);
     } catch (error) {
       if (
         error instanceof InvalidValidationError ||

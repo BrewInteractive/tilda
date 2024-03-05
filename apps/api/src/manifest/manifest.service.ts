@@ -16,6 +16,8 @@ import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { HookService } from '../hook/hook.service';
+import { HookFactory } from '../hook/hook.factory';
 
 @Injectable()
 export class ManifestService {
@@ -23,18 +25,26 @@ export class ManifestService {
     private httpService: HttpService,
     @Inject('Ajv')
     private readonly ajv: Ajv,
-    @InjectQueue('post-hook') private readonly postHookQueue: Queue,
-    @InjectQueue('send-email') private readonly sendEmailQueue: Queue,
+    @InjectQueue('hook-queue') private readonly hookQueue: Queue,
+    private readonly hookService: HookService,
   ) {}
 
-  async handlePostHooks(hooks: Hook[]): Promise<void> {
+  async handlePostHooks(hooks: Hook[], dataWithUi?: any): Promise<any> {
     for (const hook of hooks) {
-      if (hook.factory === 'webhook') {
-        await this.postHookQueue.add(hook.params);
-      } else if (hook.factory === 'email') {
-        await this.sendEmailQueue.add(hook.params);
-      }
+      await this.hookQueue.add({ hook: hook, dataWithUi: dataWithUi });
     }
+  }
+  async handlePreHooks(hooks: Hook[]): Promise<any> {
+    const preHookResult = [];
+    for (const hook of hooks) {
+      const { factory, params } = hook;
+      const result = await HookFactory.getHook(
+        factory,
+        this.hookService,
+      ).execute(params);
+      preHookResult.push(result);
+    }
+    return preHookResult;
   }
   async getManifest(
     manifestInput: ManifestRequest,
@@ -185,28 +195,32 @@ export class ManifestService {
     values: WebhookParams['values'],
     output: { [key: string]: string },
   ): { [key: string]: string } => {
-    const valuesCopy = JSON.parse(JSON.stringify(values));
-    const outputDict: { [key: string]: string } = {};
+    const transformedValues: { [key: string]: string } = {};
+    const valuesCopy = JSON.parse(JSON.stringify(values)) as {
+      [key: string]: string;
+    };
+
     Object.entries(valuesCopy).forEach(([key, value]) => {
-      const strValue = value as string;
-      const matches = strValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
+      const originalValue = value;
+      const matches = originalValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
       if (matches) {
-        const mappedValues = matches.map((match) =>
-          match
+        let transformedValue = originalValue;
+        matches.forEach((match) => {
+          const field = match
             .replace(/\{(?:\$\.)?fields\.([^}]+)\}/, '$1')
             .replace('.value', '')
-            .replace(':enc', ''),
-        );
-
-        outputDict[key] = mappedValues
-          .map(
-            (mappedValue) =>
-              output[mappedValue] || output[`${mappedValue}:enc`] || '',
-          )
-          .join(' ');
+            .replace(':enc', '');
+          transformedValue = transformedValue.replace(
+            match,
+            output[field] || output[`${field}:enc`] || '',
+          );
+        });
+        transformedValues[key] = transformedValue;
+      } else {
+        transformedValues[key] = value;
       }
     });
-    return outputDict;
+    return transformedValues;
   };
 
   setWebhookParamsValues = (manifest: TildaManifest, payload): void => {
@@ -229,5 +243,28 @@ export class ManifestService {
 
     transformHookParamsValues(manifest.data.hooks.pre);
     transformHookParamsValues(manifest.data.hooks.post);
+  };
+
+  getDataWithUiLabels = (manifest: TildaManifest, payload): any[] => {
+    const dataWithUiLabels = [];
+    for (const payloadName in payload) {
+      for (const fieldKey in manifest.data.fields) {
+        if (manifest.data.fields.hasOwnProperty(fieldKey)) {
+          if (payloadName == fieldKey) {
+            dataWithUiLabels.push({
+              [manifest.data.fields[fieldKey].ui.label]: payload[payloadName],
+            });
+            break;
+          }
+          if (manifest.data.fields[fieldKey].inputName == payloadName) {
+            dataWithUiLabels.push({
+              [manifest.data.fields[fieldKey].ui.label]: payload[payloadName],
+            });
+            break;
+          }
+        }
+      }
+    }
+    return dataWithUiLabels;
   };
 }
