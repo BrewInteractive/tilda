@@ -4,8 +4,8 @@ export class WebHookRequestFixture {
   @Mock((faker) => faker.internet.url())
   url: string;
 
-  @Mock({ type: Object, count: 1, required: false })
-  headers?: { [key: string]: string };
+  @Mock(['content-type: application/json'])
+  headers: string[];
 
   @Mock((faker) => faker.lorem.word())
   method: string;

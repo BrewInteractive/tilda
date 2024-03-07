@@ -23,6 +23,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookService } from '../hook/hook.service';
 import { HookFactory } from '../hook/hook.factory';
+import { DataWithUiLabels, PreHookResponse } from './models';
 
 @Injectable()
 export class ManifestService {
@@ -34,13 +35,19 @@ export class ManifestService {
     private readonly hookService: HookService,
   ) {}
 
-  async handlePostHooks(hooks: Hook[], dataWithUi?: any): Promise<any> {
+  async handlePostHooks(
+    hooks: Hook[],
+    dataWithUi?: DataWithUiLabels[],
+  ): Promise<void> {
     for (const hook of hooks) {
       await this.hookQueue.add({ hook: hook, dataWithUi: dataWithUi });
     }
   }
-  async handlePreHooks(hooks: Hook[], secretKey: string): Promise<any> {
-    const preHookResult = [];
+  async handlePreHooks(
+    hooks: Hook[],
+    secretKey: string,
+  ): Promise<PreHookResponse[]> {
+    const preHookResult: PreHookResponse[] = [];
     for (const hook of hooks) {
       const { signature, factory, params } = hook;
 
@@ -201,7 +208,7 @@ export class ManifestService {
 
   generateWebhookKeyValues = (
     manifest: TildaManifest,
-    payload,
+    payload: { [key: string]: string },
   ): { [key: string]: string } => {
     const output = { ...payload };
 
@@ -259,7 +266,10 @@ export class ManifestService {
     return transformedValues;
   };
 
-  setWebhookParamsValues = (manifest: TildaManifest, payload): void => {
+  setWebhookParamsValues = (
+    manifest: TildaManifest,
+    payload: { [key: string]: string },
+  ): void => {
     const output = this.generateWebhookKeyValues(manifest, payload);
 
     const transformHookParamsValues = (hooks: Hook[]): void => {
@@ -281,8 +291,11 @@ export class ManifestService {
     transformHookParamsValues(manifest.data.hooks.post);
   };
 
-  getDataWithUiLabels = (manifest: TildaManifest, payload): any[] => {
-    const dataWithUiLabels = [];
+  getDataWithUiLabels = (
+    manifest: TildaManifest,
+    payload,
+  ): DataWithUiLabels[] => {
+    const dataWithUiLabels: DataWithUiLabels[] = [];
     for (const payloadName in payload) {
       for (const fieldKey in manifest.data.fields) {
         if (manifest.data.fields.hasOwnProperty(fieldKey)) {

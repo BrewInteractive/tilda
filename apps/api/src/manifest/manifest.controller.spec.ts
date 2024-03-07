@@ -198,9 +198,7 @@ describe('ManifestController', () => {
     jest
       .spyOn(manifestService, 'addSignatureToPreHooks')
       .mockReturnValue(encryptedValidManifest);
-    jest
-      .spyOn(manifestService, 'handlePostHooks')
-      .mockResolvedValue(async () => {});
+    jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
       .mockResolvedValue(preHookResult);
@@ -234,6 +232,7 @@ describe('ManifestController', () => {
     };
     const preHookResult = [
       {
+        signature: faker.string.alpha(10),
         response: {
           data: faker.string.alpha(),
           status: 200,
@@ -241,6 +240,7 @@ describe('ManifestController', () => {
         },
       },
       {
+        signature: faker.string.alpha(10),
         response: {
           data: faker.string.alpha(),
           status: 400,
@@ -256,9 +256,8 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
-    jest
-      .spyOn(manifestService, 'handlePostHooks')
-      .mockResolvedValue(async () => {});
+    jest.spyOn(manifestService, 'getDataWithUiLabels').mockReturnValue([{}]);
+    jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
       .mockResolvedValue(preHookResult);

@@ -1,13 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import axios, {
-  AxiosError,
-  AxiosResponseHeaders,
-  RawAxiosResponseHeaders,
-} from 'axios';
-import { EmailRequest, WebHookRequest } from './models';
+import axios, { AxiosError } from 'axios';
+import { EmailRequest, WebHookResponse } from './models';
 import { EmailService } from '../email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { Email } from '../email/dto/email.dto';
+import { DataWithUiLabels } from '../manifest/models';
+import { WebhookParams } from '../models';
 
 @Injectable()
 export class HookService {
@@ -16,15 +14,17 @@ export class HookService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendWebhookAsync(params: WebHookRequest): Promise<{
-    response: {
-      status: number;
-      headers: RawAxiosResponseHeaders | AxiosResponseHeaders;
-      data: any;
-    };
-  }> {
+  async sendWebhookAsync(params: WebhookParams): Promise<WebHookResponse> {
     try {
-      const { url, headers, method, values } = params;
+      const { url, headers: headerStrings, method, values } = params;
+      const headers = {};
+
+      for (const header of headerStrings) {
+        const index = header.indexOf(':');
+        const key = header.substring(0, index).trim();
+        const value = header.substring(index + 1).trim();
+        headers[key] = value;
+      }
 
       const requestData = {};
       for (const key in values) {
@@ -61,7 +61,10 @@ export class HookService {
       }
     }
   }
-  async sendEmailAsync(params: EmailRequest, dataWithUi?: any): Promise<void> {
+  async sendEmailAsync(
+    params: EmailRequest,
+    dataWithUi?: DataWithUiLabels[],
+  ): Promise<void> {
     for (const recipient of params.recipients) {
       const recipientEmail = recipient['email:enc'];
 
@@ -79,7 +82,7 @@ export class HookService {
       }
     }
   }
-  private generateHtmlContent(dataWithUi?: any): string {
+  private generateHtmlContent(dataWithUi?: DataWithUiLabels[]): string {
     let htmlContent = '<html><body>';
 
     if (dataWithUi) {
