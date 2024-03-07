@@ -166,6 +166,7 @@ describe('ManifestController', () => {
       url: faker.internet.url.toString(),
       name: faker.string.alpha(10),
       surname: faker.string.alpha(10),
+      prehookSignatures: [faker.string.alpha(10)],
     };
     const preHookResult = [
       {
@@ -215,6 +216,10 @@ describe('ManifestController', () => {
 
     await manifestController.validate(mockManifestInput, mockResponse);
 
+    expect(manifestService.addSignatureToPreHooks).toHaveBeenCalledWith(
+      encryptedValidManifest,
+      mockManifestInput.prehookSignatures,
+    );
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
     expect(mockResponse.json).toHaveBeenCalledWith({
       validationResult: { success: true },
