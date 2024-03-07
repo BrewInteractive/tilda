@@ -16,6 +16,7 @@ export interface EmailParams {
 }
 
 export interface Hook {
+  signature?: string;
   factory: HookType;
   params: WebhookParams | EmailParams;
 }

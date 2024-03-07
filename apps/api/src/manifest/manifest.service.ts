@@ -11,7 +11,12 @@ import {
 } from '../models';
 import { ManifestRequest } from './models/manifest-request.model';
 import { GetManifestError } from './errors/manifest.error';
-import { decrypt, encrypt } from '../utils/crypto-helpers';
+import {
+  decrypt,
+  encrypt,
+  generateHmac,
+  verifyHmac,
+} from '../utils/crypto-helpers';
 import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 import { InjectQueue } from '@nestjs/bull';
@@ -34,18 +39,49 @@ export class ManifestService {
       await this.hookQueue.add({ hook: hook, dataWithUi: dataWithUi });
     }
   }
-  async handlePreHooks(hooks: Hook[]): Promise<any> {
+  async handlePreHooks(hooks: Hook[], secretKey: string): Promise<any> {
     const preHookResult = [];
     for (const hook of hooks) {
-      const { factory, params } = hook;
-      const result = await HookFactory.getHook(
-        factory,
-        this.hookService,
-      ).execute(params);
-      preHookResult.push(result);
+      const { signature, factory, params } = hook;
+
+      let isHashValid = false;
+      if (signature !== undefined && signature !== null && signature !== '') {
+        isHashValid = verifyHmac({ factory, params }, secretKey, signature);
+      }
+
+      if (!isHashValid) {
+        const result = await HookFactory.getHook(
+          factory,
+          this.hookService,
+        ).execute(params);
+        const newSignature = generateHmac({ factory, params }, secretKey);
+        preHookResult.push({ signature: newSignature, ...result });
+      } else {
+        preHookResult.push({
+          message:
+            'The pre-hook request was not sent because the signatures are the same',
+          ...hook,
+        });
+      }
     }
     return preHookResult;
   }
+
+  addSignatureToPreHooks(
+    manifest: TildaManifest,
+    signatures: string[],
+  ): TildaManifest {
+    const manifestWithPreSignatures = JSON.parse(JSON.stringify(manifest));
+    if (signatures) {
+      manifestWithPreSignatures.data.hooks.pre.forEach((hook, index) => {
+        if (index < signatures.length) {
+          hook.signature = signatures[index];
+        }
+      });
+    }
+    return manifestWithPreSignatures;
+  }
+
   async getManifest(
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {

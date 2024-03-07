@@ -195,6 +195,9 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'getDataWithUiLabels')
       .mockReturnValue(undefined);
     jest
+      .spyOn(manifestService, 'addSignatureToPreHooks')
+      .mockReturnValue(encryptedValidManifest);
+    jest
       .spyOn(manifestService, 'handlePostHooks')
       .mockResolvedValue(async () => {});
     jest
@@ -214,7 +217,8 @@ describe('ManifestController', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      success: true,
+      validationResult: { success: true },
+      hook: { pre: preHookResult },
     });
   });
   it('should validate manifest and prehook failed return failed hook', async () => {
@@ -267,6 +271,7 @@ describe('ManifestController', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
+      validationResult: { success: true },
       hook: { pre: preHookResult },
     });
   });

@@ -12,10 +12,18 @@ import { faker } from '@faker-js/faker';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { HookService } from '../hook/hook.service';
 import { HookFactory } from '../hook/hook.factory';
+import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 jest.mock('../hook/hook.factory');
-
+jest.mock('../utils/crypto-helpers', () => ({
+  generateHmac: jest.fn(),
+  verifyHmac: jest.fn(),
+  encrypt: jest.fn(),
+  decrypt: jest.fn(),
+}));
 describe('ManifestService', () => {
+  const secretKey =
+    'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
   let manifestService: ManifestService;
   let httpService: HttpService;
   const queueMock = { add: jest.fn() };
@@ -211,6 +219,7 @@ describe('ManifestService', () => {
   it('should send webhook successfully', async () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
     const hooks: Hook[] = [{ ...webHookFixture }];
+    const mockHmacValue = faker.string.alpha(10);
 
     const mockResponse = {
       response: {
@@ -218,14 +227,16 @@ describe('ManifestService', () => {
         headers: [],
         data: {},
       },
+      signature: mockHmacValue,
     };
     const mockExecute = jest.fn();
     (HookFactory.getHook as jest.Mock).mockReturnValue({
       execute: mockExecute,
     });
     mockExecute.mockResolvedValue(mockResponse);
+    (generateHmac as jest.Mock).mockImplementation(() => mockHmacValue);
 
-    const result = await manifestService.handlePreHooks(hooks);
+    const result = await manifestService.handlePreHooks(hooks, secretKey);
 
     expect(result).toEqual([mockResponse]);
     expect(HookFactory.getHook).toHaveBeenCalledWith('webhook', {
@@ -234,7 +245,51 @@ describe('ManifestService', () => {
     });
     expect(mockExecute).toHaveBeenCalledWith(hooks[0].params);
   });
+  it('should not send webhook with signatures', async () => {
+    const webHookFixture = MockFactory(WebHookFixture).one();
+    const hooks: Hook[] = [{ ...webHookFixture }];
+    const mockHmacValue = faker.string.alpha(10);
 
+    hooks[0].signature = mockHmacValue;
+
+    const mockResponse = {
+      ...hooks[0],
+      signature: mockHmacValue,
+      message:
+        'The pre-hook request was not sent because the signatures are the same',
+    };
+
+    const mockExecute = jest.fn();
+    (HookFactory.getHook as jest.Mock).mockReturnValue({
+      execute: mockExecute,
+    });
+    mockExecute.mockResolvedValue(mockResponse);
+    (generateHmac as jest.Mock).mockImplementation(() => mockHmacValue);
+    (verifyHmac as jest.Mock).mockImplementation(() => true);
+
+    const result = await manifestService.handlePreHooks(hooks, secretKey);
+
+    expect(result).toEqual([mockResponse]);
+    expect(HookFactory.getHook).not.toHaveBeenCalledWith('webhook', {
+      sendWebhookAsync: hookServiceMock.sendWebhookAsync,
+      sendEmailAsync: hookServiceMock.sendEmailAsync,
+    });
+    expect(mockExecute).not.toHaveBeenCalledWith(hooks[0].params);
+  });
+  it('should add signatures for manifest', async () => {
+    const mockTildaManifest = MockFactory(TildaManifestFixture).one();
+    const signatures = [faker.string.alpha(10)];
+    const manifestWithPreSignatures = mockTildaManifest;
+    manifestWithPreSignatures.data.hooks.pre[0].signature = signatures[0];
+    // Act
+    const result = await manifestService.addSignatureToPreHooks(
+      mockTildaManifest,
+      signatures,
+    );
+
+    // Assert
+    expect(result).toEqual(manifestWithPreSignatures);
+  });
   describe('Validate Manifest', () => {
     const validManifest = MockFactory(TildaManifestFixture).one();
     const requiredFieldMissingManifest =
@@ -284,8 +339,6 @@ describe('ManifestService', () => {
     validManifest.data.fields['name'].const['constName1'] = 'const value';
     validManifest.data.fields['surname'].const['constName2:enc'] =
       'encrypted value';
-    const secretKey =
-      'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
 
     it('should encrypt email recipients in manifest', () => {
       const encryptedManifest = manifestService.encryptManifestEncFields(
@@ -332,10 +385,12 @@ describe('ManifestService', () => {
       'const value';
     encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
       'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
-    const secretKey =
-      'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
 
     it('should decrypt email recipients in manifest', () => {
+      (decrypt as jest.Mock)
+        .mockImplementationOnce(() => 'example@mail.com')
+        .mockImplementation(() => 'encrypted value');
+
       const decryptedManifest = manifestService.decryptManifestEncFields(
         encryptedValidManifest,
         secretKey,
