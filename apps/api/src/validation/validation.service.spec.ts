@@ -13,7 +13,7 @@ const mockValidatorFactory = {
         return {
           getValidator: jest.fn(() => ({
             type: 'string',
-            pattern: '^[a-zA-Z]+$',
+            pattern: '^[a-zA-Z\\s]+$',
           })),
         };
       case 'regex':
@@ -40,7 +40,7 @@ describe('ValidationService', () => {
     {
       factory: ValidatorType.regex,
       params: {
-        value: '^[a-zA-Z]+$',
+        value: '^[a-zA-Z\\s]+$',
       },
     },
   ];
@@ -51,7 +51,7 @@ describe('ValidationService', () => {
     {
       factory: ValidatorType.regex,
       params: {
-        value: '^[a-zA-Z]+$',
+        value: '^[a-zA-Z\\s]+$',
       },
     },
   ];

@@ -327,7 +327,7 @@ describe('ManifestController', () => {
       errors: [
         {
           path: '#/properties/surname/pattern',
-          message: 'must match pattern "^[a-zA-Z]+$"',
+          message: 'must match pattern "^[a-zA-Z\\s]+$"',
         },
       ],
     });
@@ -343,7 +343,7 @@ describe('ManifestController', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
       errors:
-        'must match pattern "^[a-zA-Z]+$" (Path: #/properties/name/pattern)',
+        'must match pattern "^[a-zA-Z\\s]+$" (Path: #/properties/name/pattern)',
     });
   });
   it('should handle Hash is not valid error', async () => {
