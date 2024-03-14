@@ -9,7 +9,6 @@ import {
   TildaManifest,
   WebhookParams,
 } from '../models';
-import { ManifestRequest } from './models';
 import { GetManifestError } from './errors/manifest.error';
 import {
   decrypt,
@@ -23,7 +22,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookService } from '../hook/hook.service';
 import { HookFactory } from '../hook/hook.factory';
-import { DataWithUiLabels, PreHookResponse } from './models';
+import { DataWithUiLabels, PreHookResponse, ManifestRequest } from './models';
 
 @Injectable()
 export class ManifestService {
