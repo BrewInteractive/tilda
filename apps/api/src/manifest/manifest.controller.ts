@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ManifestService } from './manifest.service';
 import { ConfigService } from '@nestjs/config';
-import { ManifestRequest } from './models/manifest-request.model';
+import { ManifestRequest } from './models';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 import {
   GetManifestError,

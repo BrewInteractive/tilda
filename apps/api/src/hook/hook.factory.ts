@@ -2,7 +2,7 @@ import { HookInterface } from './hook.interface';
 import { HookService } from './hook.service';
 import { EmailProcessor } from './email.processor';
 import { WebhookProcessor } from './webhook.processor';
-import { HookType } from '../models/hooks/hook-type.enum';
+import { HookType } from '../models';
 export class HookFactory {
   static readonly hook = new Map<
     HookType,

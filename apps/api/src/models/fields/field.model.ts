@@ -1,6 +1,4 @@
-import { Validator } from './validator.model';
-import { ConstObject } from './const.model';
-import { UIObject } from './ui.model';
+import { ConstObject, UIObject, Validator } from '.';
 
 export interface Field {
   inputName?: string;

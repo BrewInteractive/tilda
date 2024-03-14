@@ -1,4 +1,4 @@
-import { HookType } from '../../models/hooks/hook-type.enum';
+import { HookType } from '../../models';
 
 export class DataWithUiLabels {
   [key: string]: string;

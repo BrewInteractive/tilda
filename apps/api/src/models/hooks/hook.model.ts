@@ -1,4 +1,4 @@
-import { HookType } from './hook-type.enum';
+import { HookType } from '.';
 
 export interface WebhookParams {
   url: string;

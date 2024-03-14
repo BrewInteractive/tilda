@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 import Ajv from 'ajv';
 import { MockFactory } from 'mockingbird';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { ValidatorType } from '../models/fields/validator-type.enum';
+import { ValidatorType } from '../models/fields';
 
 const mockValidatorFactory = {
   getValidator: jest.fn((validatorType) => {

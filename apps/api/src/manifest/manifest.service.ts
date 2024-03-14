@@ -9,7 +9,7 @@ import {
   TildaManifest,
   WebhookParams,
 } from '../models';
-import { ManifestRequest } from './models/manifest-request.model';
+import { ManifestRequest } from './models';
 import { GetManifestError } from './errors/manifest.error';
 import {
   decrypt,

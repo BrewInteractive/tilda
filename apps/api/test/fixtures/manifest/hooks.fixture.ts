@@ -1,6 +1,5 @@
-import { HookType } from '../../../src/models/hooks/hook-type.enum';
 import { Mock } from 'mockingbird';
-import { Hook } from '../../../src/models/hooks/';
+import { Hook, HookType } from '../../../src/models';
 import { faker } from '@faker-js/faker';
 
 class WebhookRequestFixture {
