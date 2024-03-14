@@ -76,7 +76,10 @@ export class ManifestController {
   @UseInterceptors(FileInterceptor('manifest'))
   async validate(@Body() manifestInput: any, @Res() res): Promise<void> {
     try {
-      const { url, base64, ...payload } = manifestInput;
+      const { url, base64, prehookSignatures, ...payload } = manifestInput;
+      const prehookSignaturesArray = Array.isArray(prehookSignatures)
+        ? prehookSignatures
+        : [prehookSignatures];
 
       const manifestInfo: ManifestRequest = {
         url,
@@ -128,26 +131,35 @@ export class ManifestController {
         manifestResponse,
         payload,
       );
-
+      const manifestWithPreSignatures =
+        this.manifestService.addSignatureToPreHooks(
+          manifestResponse,
+          prehookSignaturesArray,
+        );
       const preHooksResult = await this.manifestService.handlePreHooks(
-        manifestResponse.data.hooks.pre,
+        manifestWithPreSignatures.data.hooks.pre,
+        this.secretKey,
       );
 
       if (
         preHooksResult &&
-        preHooksResult.filter((hook) => hook.response.status != 200).length > 0
+        preHooksResult.filter(
+          (hook) => hook.response && hook.response.status != 200,
+        ).length > 0
       ) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ hook: { pre: preHooksResult } });
+          .json({ validationResult, hook: { pre: preHooksResult } });
       }
 
       await this.manifestService.handlePostHooks(
-        manifestResponse.data.hooks.post,
+        manifestWithPreSignatures.data.hooks.post,
         dataWithUi,
       );
 
-      return res.status(HttpStatus.OK).json(validationResult);
+      return res
+        .status(HttpStatus.OK)
+        .json({ validationResult, hook: { pre: preHooksResult } });
     } catch (error) {
       if (
         error instanceof InvalidValidationError ||
