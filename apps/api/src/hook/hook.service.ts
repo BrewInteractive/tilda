@@ -36,6 +36,7 @@ export class HookService {
         url,
         headers,
         params: requestData,
+        data: requestData,
       });
 
       return {
