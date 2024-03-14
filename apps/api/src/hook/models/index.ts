@@ -1,2 +1,2 @@
-export * from './web-hook-request.model';
-export * from './email-request.model';
+export * from './email.model';
+export * from './web-hook.model';

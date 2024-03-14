@@ -2,9 +2,9 @@ import { HookType } from './hook-type.enum';
 
 export interface WebhookParams {
   url: string;
-  headers: string[];
+  headers?: string[];
   method: string;
-  values: { [key: string]: string };
+  values?: { [key: string]: string };
 }
 
 export interface EmailRecipient {

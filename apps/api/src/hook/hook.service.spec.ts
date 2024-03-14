@@ -43,7 +43,7 @@ describe('HookService', () => {
     const mockResponse = {
       data: faker.string.alpha(),
       status: 200,
-      headers: { 'content-type': 'application/json' },
+      headers: ['content-type: application/json'],
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
     const webHookRequest = MockFactory(WebHookRequestFixture).one();
