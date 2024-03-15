@@ -21,6 +21,11 @@ export class ValidationService {
     const { factory, params } = validator;
     const customValidator = this.validatorFactory.getValidator(factory);
     if (customValidator) {
+      // If the field is required, add it to the schema required array
+      if (factory === 'notEmpty') {
+        schema.required = schema.required || [];
+        schema.required.push(fieldName);
+      }
       schema.properties[fieldName] = {
         ...schema.properties[fieldName],
         ...customValidator.getValidator(params),
