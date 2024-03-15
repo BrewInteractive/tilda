@@ -1,7 +1,6 @@
 import { Mock } from 'mockingbird';
 import { faker } from '@faker-js/faker';
-import { HookType } from '../../../src/models/hooks/hook-type.enum';
-import { Field, Hook, TildaManifest } from '../../../src/models';
+import { Field, Hook, HookType, TildaManifest } from '../../../src/models';
 
 class UiFixture {
   @Mock(() => faker.lorem.word())

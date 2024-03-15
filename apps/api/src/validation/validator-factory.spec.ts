@@ -1,5 +1,5 @@
 import { ValidatorFactory } from './validator-factory';
-import { ValidatorType } from '../models/fields/validator-type.enum';
+import { ValidatorType } from '../models';
 import {
   Alpha,
   Numeric,

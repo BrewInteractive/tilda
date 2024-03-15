@@ -1,4 +1,4 @@
-import { ValidatorType } from '../models/fields/validator-type.enum';
+import { ValidatorType } from '../models';
 import { ValidatorInterface } from './validator.interface';
 import {
   AlphaNumeric,

@@ -3,7 +3,6 @@ import { ManifestController } from './manifest.controller';
 import { ManifestService } from './manifest.service';
 import { ConfigService } from '@nestjs/config';
 import { HttpStatus } from '@nestjs/common';
-import { ManifestRequest } from './models/manifest-request.model';
 import { HttpService } from '@nestjs/axios';
 import { faker } from '@faker-js/faker';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
@@ -13,8 +12,9 @@ import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { MockFactory } from 'mockingbird';
-import { EmailParams } from '../models';
 import { HookService } from '../hook/hook.service';
+import { ManifestRequest } from './models';
+import { EmailParams } from '../models';
 
 jest.mock('../utils/crypto-helpers', () => ({
   generateHmac: jest.fn(),

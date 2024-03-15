@@ -1,5 +1,4 @@
-import { OnMatchType } from './on-match-type.enum';
-import { ValidatorType } from './validator-type.enum';
+import { OnMatchType, ValidatorType } from '.';
 
 export interface Validator {
   factory: ValidatorType;
