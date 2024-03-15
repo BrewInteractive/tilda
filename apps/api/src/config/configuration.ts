@@ -13,4 +13,5 @@ export default () => ({
     },
   },
   EMAIL_SERVICE: process.env.EMAIL_SERVICE,
+  API_KEY: process.env.API_KEY,
 });

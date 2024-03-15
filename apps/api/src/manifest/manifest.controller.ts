@@ -18,9 +18,10 @@ import {
   EncryptionError,
   HmacError,
 } from '../utils/errors/crypto-helpers.error';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ValidationService } from '../validation/validation.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { DisableApiKey } from '../utils/decorators/disable-api-key/disable-api-key.decorator';
 
 @ApiTags('manifest')
 @Controller('manifest')
@@ -34,6 +35,7 @@ export class ManifestController {
     this.secretKey = this.configService.get<string>('ENCRYPTION_SECRET');
   }
   @Post('hash')
+  @ApiSecurity('ApiKey')
   async hash(
     @Body() manifestInput: ManifestRequest,
     @Res() res,
@@ -74,6 +76,7 @@ export class ManifestController {
 
   @Post('validate')
   @UseInterceptors(FileInterceptor('manifest'))
+  @DisableApiKey()
   async validate(@Body() manifestInput: any, @Res() res): Promise<void> {
     try {
       const { url, base64, prehookSignatures, ...payload } = manifestInput;
