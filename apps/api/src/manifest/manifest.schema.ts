@@ -99,7 +99,7 @@ const TildaManifestSchema = {
                 properties: {
                   factory: {
                     type: 'string',
-                    enum: ['email'],
+                    enum: ['email', 'webhook'],
                   },
                   params: {
                     type: 'object',
