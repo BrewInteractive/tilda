@@ -13,4 +13,10 @@ export default () => ({
     },
   },
   EMAIL_SERVICE: process.env.EMAIL_SERVICE,
+  CORS_CONFIG: {
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : [],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  },
 });
