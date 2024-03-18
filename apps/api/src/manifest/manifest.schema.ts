@@ -118,8 +118,47 @@ const TildaManifestSchema = {
                           required: ['email:enc'],
                         },
                       },
+                      url: {
+                        type: 'string',
+                        minLength: 1,
+                      },
+                      method: {
+                        type: 'string',
+                        enum: ['post', 'get', 'POST', 'GET'],
+                      },
+                      headers: {
+                        type: 'array',
+                        items: {
+                          type: 'string',
+                        },
+                        nullable: true,
+                      },
+                      values: {
+                        type: 'object',
+                        nullable: true,
+                        additionalProperties: {
+                          type: 'string',
+                        },
+                      },
                     },
-                    required: ['recipients'],
+                    required: [],
+                  },
+                },
+                if: {
+                  properties: { factory: { const: 'email' } },
+                },
+                then: {
+                  properties: {
+                    params: {
+                      required: ['recipients'],
+                    },
+                  },
+                },
+                else: {
+                  properties: {
+                    params: {
+                      required: ['url', 'method'],
+                    },
                   },
                 },
                 required: ['factory', 'params'],

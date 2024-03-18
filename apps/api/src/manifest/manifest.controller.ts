@@ -46,7 +46,9 @@ export class ManifestController {
 
       const isManifestValid = this.manifestService.validateManifest(manifest);
       if (!isManifestValid) {
-        res.status(HttpStatus.BAD_REQUEST).json({ error: 'Invalid manifest' });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ error: 'Invalid manifest' });
       }
 
       manifest = this.manifestService.encryptManifestEncFields(
@@ -56,16 +58,18 @@ export class ManifestController {
 
       const hmacValue = generateHmac(manifest.data, this.secretKey);
       manifest.hmac = hmacValue;
-      res.status(HttpStatus.OK).json(manifest);
+      return res.status(HttpStatus.OK).json(manifest);
     } catch (error) {
       if (
         error instanceof GetManifestError ||
         error instanceof HmacError ||
         error instanceof EncryptionError
       ) {
-        res.status(HttpStatus.BAD_REQUEST).json({ error: error.message });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ error: error.message });
       } else {
-        res
+        return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ error: error.message });
       }
@@ -165,9 +169,11 @@ export class ManifestController {
         error instanceof InvalidValidationError ||
         error instanceof HmacError
       ) {
-        res.status(HttpStatus.BAD_REQUEST).json({ errors: error.message });
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ errors: error.message });
       } else
-        res
+        return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
           .json({ error: error.message });
     }
