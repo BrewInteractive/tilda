@@ -3,6 +3,8 @@ export default () => ({
   SWAGGER_ENABLED: process.env.SWAGGER_ENABLED === 'true' || false,
   BULL_HOST: process.env.BULL_HOST,
   BULL_PORT: process.env.BULL_PORT,
+  BULL_PASSWORD: process.env.BULL_PASSWORD,
+  BULL_USERNAME: process.env.BULL_USERNAME,
   SMTP: {
     HOST: process.env.SMTP_HOST,
     PORT: process.env.SMTP_PORT,

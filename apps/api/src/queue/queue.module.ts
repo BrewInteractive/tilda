@@ -17,6 +17,11 @@ import { EmailModule } from '../email/email.module';
         redis: {
           host: configService.get<string>('BULL_HOST'),
           port: configService.get<number>('BULL_PORT'),
+          password: configService.get<string>('BULL_PASSWORD'),
+          username: configService.get<string>('BULL_USERNAME'),
+          tls: {
+            rejectUnauthorized: false,
+          },
         },
       }),
       inject: [ConfigService],
