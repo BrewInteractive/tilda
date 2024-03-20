@@ -15,6 +15,7 @@ export default () => ({
     },
   },
   EMAIL_SERVICE: process.env.EMAIL_SERVICE,
+  API_KEY: process.env.API_KEY,
   CORS_CONFIG: {
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',')
