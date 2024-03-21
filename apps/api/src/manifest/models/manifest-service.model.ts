@@ -5,6 +5,7 @@ export class DataWithUiLabels {
 }
 
 export class PreHookResponse {
+  success?: any;
   signature?: string;
   response?: {
     status: number;

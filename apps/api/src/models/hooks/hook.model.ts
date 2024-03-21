@@ -5,6 +5,7 @@ export interface WebhookParams {
   headers?: string[];
   method: string;
   values?: { [key: string]: string };
+  success?: string;
 }
 
 export interface EmailRecipient {
