@@ -320,7 +320,7 @@ describe('ManifestController', () => {
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
-    (verifyHmac as jest.Mock).mockReturnValue(true); //TODO SPY EKLE
+    (verifyHmac as jest.Mock).mockReturnValue(true);
 
     const mockResponse = {
       status: jest.fn().mockReturnThis(),
