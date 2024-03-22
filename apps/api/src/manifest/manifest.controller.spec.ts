@@ -174,9 +174,21 @@ describe('ManifestController', () => {
       {
         response: {
           data: faker.string.alpha(),
+          success: true,
           status: 200,
           headers: { 'content-type': 'application/json' },
         },
+      },
+    ];
+    const preHookResultWithSuccess = [
+      {
+        response: {
+          data: faker.string.alpha(),
+          success: true,
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+        success: true,
       },
     ];
     jest
@@ -193,6 +205,9 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'addSignatureToPreHooks')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
+    jest
+      .spyOn(manifestService, 'processPreHooksResultsSuccess')
+      .mockReturnValue(preHookResultWithSuccess);
     jest
       .spyOn(manifestService, 'handlePreHooks')
       .mockResolvedValue(preHookResult);
@@ -215,7 +230,7 @@ describe('ManifestController', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.OK);
     expect(mockResponse.json).toHaveBeenCalledWith({
       validationResult: { success: true },
-      hook: { pre: preHookResult },
+      hook: { pre: preHookResultWithSuccess },
     });
   });
   it('should validate manifest and pre hook result 200 but got succes false return validation result bad request', async () => {
