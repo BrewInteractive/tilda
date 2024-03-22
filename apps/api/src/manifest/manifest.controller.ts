@@ -21,7 +21,6 @@ import {
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ValidationService } from '../validation/validation.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { WebhookParams } from '../models';
 import { DisableApiKey } from '../utils/decorators/disable-api-key/disable-api-key.decorator';
 
 @ApiTags('manifest')
@@ -149,30 +148,15 @@ export class ManifestController {
         this.secretKey,
       );
 
-      for (let index = 0; index < preHooksResults.length; index++) {
-        const preHooksResult = preHooksResults[index];
-        const hook = manifestWithPreSignatures.data.hooks.pre[index];
-        let resultNavigation = (hook.params as WebhookParams).success;
-        if (resultNavigation) {
-          resultNavigation = resultNavigation.substring(2);
-          const navigationParts = resultNavigation.split('.');
-          let currentPart = preHooksResult;
-          for (const part of navigationParts) {
-            if (currentPart && currentPart.hasOwnProperty(part)) {
-              currentPart = currentPart[part];
-            } else {
-              currentPart = undefined;
-              break;
-            }
-          }
-          if (currentPart !== undefined) {
-            preHooksResult.success = currentPart;
-          }
-        }
-      }
+      const preHookResultsWithSuccess =
+        this.manifestService.processPreHooksResultsSuccess(
+          preHooksResults,
+          manifestWithPreSignatures,
+        );
+
       if (
-        preHooksResults &&
-        preHooksResults.filter(
+        preHookResultsWithSuccess &&
+        preHookResultsWithSuccess.filter(
           (hook) =>
             hook.success == false ||
             (hook.response && hook.response.status != 200),
@@ -180,7 +164,7 @@ export class ManifestController {
       ) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ validationResult, hook: { pre: preHooksResults } });
+          .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
       }
 
       await this.manifestService.handlePostHooks(
@@ -190,7 +174,7 @@ export class ManifestController {
 
       return res
         .status(HttpStatus.OK)
-        .json({ validationResult, hook: { pre: preHooksResults } });
+        .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
     } catch (error) {
       if (
         error instanceof InvalidValidationError ||

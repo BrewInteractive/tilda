@@ -235,6 +235,17 @@ describe('ManifestController', () => {
         },
       },
     ];
+    const preHookResultWithSuccess = [
+      {
+        response: {
+          data: faker.string.alpha(),
+          success: false,
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+        success: false,
+      },
+    ];
     jest
       .spyOn(manifestService, 'getManifest')
       .mockResolvedValue(encryptedValidManifest);
@@ -252,6 +263,9 @@ describe('ManifestController', () => {
     jest
       .spyOn(manifestService, 'handlePreHooks')
       .mockResolvedValue(preHookResult);
+    jest
+      .spyOn(manifestService, 'processPreHooksResultsSuccess')
+      .mockReturnValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -271,7 +285,7 @@ describe('ManifestController', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
       validationResult: { success: true },
-      hook: { pre: preHookResult },
+      hook: { pre: preHookResultWithSuccess },
     });
   });
   it('should validate manifest and prehook failed return failed hook', async () => {
@@ -306,7 +320,7 @@ describe('ManifestController', () => {
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
-    (verifyHmac as jest.Mock).mockReturnValue(true);
+    (verifyHmac as jest.Mock).mockReturnValue(true); //TODO SPY EKLE
 
     const mockResponse = {
       status: jest.fn().mockReturnThis(),

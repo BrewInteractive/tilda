@@ -13,6 +13,7 @@ import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifes
 import { HookService } from '../hook/hook.service';
 import { HookFactory } from '../hook/hook.factory';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
+import { PreHookResponse } from './models';
 
 jest.mock('../hook/hook.factory');
 jest.mock('../utils/crypto-helpers', () => ({
@@ -329,6 +330,96 @@ describe('ManifestService', () => {
         expect(isValid).toBe(expectedOutput);
       },
     );
+  });
+
+  it('should navigate to the specified property and return its value', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+        contact: {
+          email: faker.internet.email(),
+          phone: faker.phone.number(),
+        },
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = manifestService.navigateToObjectProperty(
+      object,
+      propertyPath,
+    );
+    expect(result).toBe(object.user.contact.email);
+  });
+
+  it('should return undefined for non-existent property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = manifestService.navigateToObjectProperty(
+      object,
+      propertyPath,
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle empty property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = '';
+    const result = manifestService.navigateToObjectProperty(
+      object,
+      propertyPath,
+    );
+    expect(result).toBe(undefined);
+  });
+
+  it('should correctly process pre-hooks results and update success property based on the navigation path', () => {
+    const preHooksResults: PreHookResponse[] = [
+      { data: { id: 1, value: 'test1' }, params: { success: '$.data.value' } },
+      { data: { id: 2, value: 'test2' }, params: { success: '$.data.id' } },
+    ];
+    const manifest = {
+      hmac: '',
+      data: {
+        fields: {},
+        hooks: {
+          pre: [
+            { factory: 'webhook', params: { success: '$.data.value' } },
+            { factory: 'webhook', params: { success: '$.data.id' } },
+          ],
+        },
+      },
+    } as TildaManifest;
+
+    const expectedResults = [
+      {
+        data: { id: 1, value: 'test1' },
+        params: { success: '$.data.value' },
+        success: 'test1',
+      },
+      {
+        data: { id: 2, value: 'test2' },
+        params: { success: '$.data.id' },
+        success: 2,
+      },
+    ];
+
+    const newPreHooksResults = manifestService.processPreHooksResultsSuccess(
+      preHooksResults,
+      manifest,
+    );
+    expect(newPreHooksResults).toEqual(expectedResults);
   });
 
   describe('Encryption Functions', () => {
