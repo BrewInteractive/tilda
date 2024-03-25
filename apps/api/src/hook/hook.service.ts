@@ -39,6 +39,9 @@ export class HookService {
         data: requestData,
       });
 
+      console.info('Webhook Request:', requestData);
+      console.info('Webhook Response:', result.status, result.data);
+
       return {
         response: {
           status: result.status,
@@ -48,7 +51,7 @@ export class HookService {
       };
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error('Error Message:', error.message);
+        console.error('AxiosError Message:', error.message);
         return {
           response: {
             status: error.response.status,
@@ -57,7 +60,7 @@ export class HookService {
           },
         };
       } else {
-        console.error('Eror Message:', error.message);
+        console.error('Error Message:', error.message);
         throw error;
       }
     }

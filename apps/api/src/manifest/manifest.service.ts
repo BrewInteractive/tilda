@@ -202,6 +202,9 @@ export class ManifestService {
 
     const isValid = validate(manifest);
 
+    if (validate.errors)
+      console.info('validateManifest errors', validate.errors);
+
     return isValid;
   };
 
