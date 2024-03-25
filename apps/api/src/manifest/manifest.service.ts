@@ -315,4 +315,40 @@ export class ManifestService {
     }
     return dataWithUiLabels;
   };
+
+  navigateToObjectProperty(object, propertyPath: string) {
+    const parts = propertyPath.split('.');
+    let current = object;
+    for (const part of parts) {
+      if (current && Object.hasOwnProperty.call(current, part)) {
+        current = current[part];
+      } else {
+        return undefined;
+      }
+    }
+    return current;
+  }
+
+  processPreHooksResultsSuccess(
+    preHooksResults: PreHookResponse[],
+    manifest: TildaManifest,
+  ): PreHookResponse[] {
+    const newPreHooksResults = JSON.parse(JSON.stringify(preHooksResults));
+    newPreHooksResults.forEach((preHookResult, index) => {
+      const hook = manifest.data.hooks.pre[index];
+      const resultNavigation = (hook.params as WebhookParams).success;
+
+      if (resultNavigation) {
+        const navigationPath = resultNavigation.substring(2);
+        const result = this.navigateToObjectProperty(
+          preHookResult,
+          navigationPath,
+        );
+        if (result !== undefined) {
+          preHookResult.success = result;
+        }
+      }
+    });
+    return newPreHooksResults;
+  }
 }

@@ -143,20 +143,27 @@ export class ManifestController {
           manifestResponse,
           prehookSignaturesArray,
         );
-      const preHooksResult = await this.manifestService.handlePreHooks(
+      const preHooksResults = await this.manifestService.handlePreHooks(
         manifestWithPreSignatures.data.hooks.pre,
         this.secretKey,
       );
 
+      const preHookResultsWithSuccess =
+        this.manifestService.processPreHooksResultsSuccess(
+          preHooksResults,
+          manifestWithPreSignatures,
+        );
+
       if (
-        preHooksResult &&
-        preHooksResult.filter(
-          (hook) => hook.response && hook.response.status != 200,
+        preHookResultsWithSuccess &&
+        preHookResultsWithSuccess.filter(
+          (hook) =>
+            !hook.success || (hook.response && hook.response.status != 200),
         ).length > 0
       ) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ validationResult, hook: { pre: preHooksResult } });
+          .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
       }
 
       await this.manifestService.handlePostHooks(
@@ -166,7 +173,7 @@ export class ManifestController {
 
       return res
         .status(HttpStatus.OK)
-        .json({ validationResult, hook: { pre: preHooksResult } });
+        .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
     } catch (error) {
       if (
         error instanceof InvalidValidationError ||
