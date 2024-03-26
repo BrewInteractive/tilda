@@ -1,10 +1,10 @@
 import { DataWithUiLabels } from '../manifest/models';
-import { EmailParams, WebhookParams } from '../models';
+import { HookParams } from '../models';
 import { WebHookResponse } from './models';
 
 export interface HookInterface {
   execute(
-    params: EmailParams | WebhookParams,
+    params: HookParams,
     dataWithUi?: DataWithUiLabels[],
   ): Promise<void> | Promise<WebHookResponse>;
 }

@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { EmailRequest, WebHookResponse } from './models';
 import { EmailService } from '../email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { Email } from '../email/dto/email.dto';
 import { DataWithUiLabels } from '../manifest/models';
-import { WebhookParams } from '../models';
+import { WebhookHttpMethod, WebhookParams } from '../models';
 
 @Injectable()
 export class HookService {
@@ -31,16 +31,24 @@ export class HookService {
         requestData[key] = values[key];
       }
 
-      const result = await axios({
+      const axiosConfig = {
         method,
         url,
         headers,
-        params: requestData,
-        data: requestData,
-      });
+      } as AxiosRequestConfig;
 
-      console.info('Webhook Request:', requestData);
-      console.info('Webhook Response:', result.status, result.data);
+      if (method === WebhookHttpMethod.POST) {
+        axiosConfig.data = requestData;
+      }
+
+      if (method === WebhookHttpMethod.GET) {
+        axiosConfig.params = requestData;
+      }
+
+      const result = await axios(axiosConfig);
+
+      console.log('Webhook Request Detail:', axiosConfig);
+      console.log('Webhook Response Detail:', result.status, result.data);
 
       return {
         response: {
@@ -51,7 +59,7 @@ export class HookService {
       };
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.error('AxiosError Message:', error.message);
+        console.error('AxiosError:', error.message);
         return {
           response: {
             status: error.response.status,
