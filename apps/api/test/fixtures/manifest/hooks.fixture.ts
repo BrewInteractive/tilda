@@ -1,20 +1,8 @@
-import { Mock } from 'mockingbird';
 import { Hook, HookType } from '../../../src/models';
+
+import { Mock } from 'mockingbird';
+import { WebHookRequestFixture } from '../hook/web-hook-request.fixture';
 import { faker } from '@faker-js/faker';
-
-class WebhookRequestFixture {
-  @Mock((faker) => faker.internet.url())
-  url: string;
-
-  @Mock({ type: Object, count: 1, required: true })
-  headers: string[];
-
-  @Mock((faker) => faker.lorem.word())
-  method: string;
-
-  @Mock({ type: Object, count: 1, required: false })
-  values: { [key: string]: string };
-}
 
 class EmailRequestFixture {
   @Mock({
@@ -31,8 +19,8 @@ export class WebHookFixture implements Hook {
   @Mock(() => HookType.webhook)
   factory: HookType;
 
-  @Mock(WebhookRequestFixture)
-  params: WebhookRequestFixture;
+  @Mock(WebHookRequestFixture)
+  params: WebHookRequestFixture;
 }
 
 export class EmailHookFixture implements Hook {

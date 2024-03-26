@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { EmailRequest } from '../hook/models';
 import { HookQueue } from './hook.queue';
 import { HookService } from '../hook/hook.service';
-import { WebHookRequestFixture } from '../../test/fixtures';
 import { MockFactory } from 'mockingbird';
+import { WebHookRequestFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
 
 describe('HookQueue', () => {
@@ -39,7 +41,7 @@ describe('HookQueue', () => {
                 'email:enc': faker.internet.email(),
               },
             ],
-          },
+          } as EmailRequest,
         },
       },
     };
@@ -48,7 +50,6 @@ describe('HookQueue', () => {
 
     expect(hookServiceMock.sendEmailAsync).toHaveBeenCalledWith(
       job.data.hook.params,
-      undefined,
     );
   });
 
@@ -63,16 +64,13 @@ describe('HookQueue', () => {
                 'email:enc': faker.internet.email(),
               },
             ],
+            dataWithUi: {
+              name: faker.person.firstName(),
+
+              surname: faker.person.lastName(),
+            },
           },
         },
-        dataWithUi: [
-          {
-            name: faker.person.firstName(),
-          },
-          {
-            surname: faker.person.lastName(),
-          },
-        ],
       },
     };
 
@@ -80,7 +78,6 @@ describe('HookQueue', () => {
 
     expect(hookServiceMock.sendEmailAsync).toHaveBeenCalledWith(
       job.data.hook.params,
-      job.data.dataWithUi,
     );
   });
   it('should process webhook hook with correct factory and params', async () => {

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import {
+  DataWithUiLabels,
   EmailParams,
   EmailRecipient,
   Field,
@@ -22,7 +23,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookService } from '../hook/hook.service';
 import { HookFactory } from '../hook/hook.factory';
-import { DataWithUiLabels, PreHookResponse, ManifestRequest } from './models';
+import { PreHookResponse, ManifestRequest } from './models';
 
 @Injectable()
 export class ManifestService {
@@ -34,12 +35,9 @@ export class ManifestService {
     private readonly hookService: HookService,
   ) {}
 
-  async handlePostHooks(
-    hooks: Hook[],
-    dataWithUi?: DataWithUiLabels[],
-  ): Promise<void> {
+  async handlePostHooks(hooks: Hook[]): Promise<void> {
     for (const hook of hooks) {
-      await this.hookQueue.add({ hook: hook, dataWithUi: dataWithUi });
+      await this.hookQueue.add({ hook: hook });
     }
   }
   async handlePreHooks(
@@ -296,21 +294,19 @@ export class ManifestService {
   getDataWithUiLabels = (
     manifest: TildaManifest,
     payload,
-  ): DataWithUiLabels[] => {
-    const dataWithUiLabels: DataWithUiLabels[] = [];
+  ): DataWithUiLabels => {
+    const dataWithUiLabels: DataWithUiLabels = {};
     for (const payloadName in payload) {
       for (const fieldKey in manifest.data.fields) {
         if (manifest.data.fields.hasOwnProperty(fieldKey)) {
           if (payloadName == fieldKey) {
-            dataWithUiLabels.push({
-              [manifest.data.fields[fieldKey].ui.label]: payload[payloadName],
-            });
+            dataWithUiLabels[manifest.data.fields[fieldKey].ui.label] =
+              payload[payloadName];
             break;
           }
           if (manifest.data.fields[fieldKey].inputName == payloadName) {
-            dataWithUiLabels.push({
-              [manifest.data.fields[fieldKey].ui.label]: payload[payloadName],
-            });
+            dataWithUiLabels[manifest.data.fields[fieldKey].ui.label] =
+              payload[payloadName];
             break;
           }
         }

@@ -26,9 +26,6 @@ export class HookQueue {
   async processHook(job) {
     const { factory, params } = job.data.hook;
 
-    await HookFactory.getHook(factory, this.hookService).execute(
-      params,
-      job.data.dataWithUi,
-    );
+    await HookFactory.getHook(factory, this.hookService).execute(params);
   }
 }

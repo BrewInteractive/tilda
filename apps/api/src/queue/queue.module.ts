@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { ExpressAdapter } from '@bull-board/express';
-import { HookQueue } from './hook.queue';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { HookModule } from '../hook/hook.module';
+
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullModule } from '@nestjs/bull';
 import { EmailModule } from '../email/email.module';
+import { ExpressAdapter } from '@bull-board/express';
+import { HookModule } from '../hook/hook.module';
+import { HookQueue } from './hook.queue';
+import { Module } from '@nestjs/common';
 
 @Module({
   imports: [

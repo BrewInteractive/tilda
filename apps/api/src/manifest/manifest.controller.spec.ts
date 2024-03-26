@@ -1,20 +1,21 @@
+import { EmailParams, WebhookParams } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ManifestController } from './manifest.controller';
-import { ManifestService } from './manifest.service';
-import { ConfigService } from '@nestjs/config';
-import { HttpStatus } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { faker } from '@faker-js/faker';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
-import { ValidationModule } from '../validation/validation.module';
-import { ValidationService } from '../validation/validation.service';
+
 import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
-import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { MockFactory } from 'mockingbird';
+import { ConfigService } from '@nestjs/config';
 import { HookService } from '../hook/hook.service';
+import { HttpService } from '@nestjs/axios';
+import { HttpStatus } from '@nestjs/common';
+import { ManifestController } from './manifest.controller';
 import { ManifestRequest } from './models';
-import { EmailParams, WebhookParams } from '../models';
+import { ManifestService } from './manifest.service';
+import { MockFactory } from 'mockingbird';
+import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { ValidationModule } from '../validation/validation.module';
+import { ValidationService } from '../validation/validation.service';
+import { faker } from '@faker-js/faker';
 
 jest.mock('../utils/crypto-helpers', () => ({
   generateHmac: jest.fn(),
@@ -233,7 +234,7 @@ describe('ManifestController', () => {
       hook: { pre: preHookResultWithSuccess },
     });
   });
-  it('should validate manifest and pre hook result 200 but got succes false return validation result bad request', async () => {
+  it('should validate manifest and pre hook result 200 but got success false return validation result bad request', async () => {
     const mockManifestInput = {
       url: faker.internet.url.toString(),
       name: faker.string.alpha(10),
@@ -327,7 +328,7 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
-    jest.spyOn(manifestService, 'getDataWithUiLabels').mockReturnValue([{}]);
+    jest.spyOn(manifestService, 'getDataWithUiLabels').mockReturnValue({});
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
