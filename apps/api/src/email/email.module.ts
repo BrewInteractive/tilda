@@ -1,11 +1,12 @@
-import { SmtpEmailConfig } from './providers/smtp-email.config';
-import { SmtpEmailService } from './providers/smtp-email.service';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
 import { EmailServiceType } from './enum/email.service.type.enum';
 import { Module } from '@nestjs/common';
+import { SmtpEmailConfig } from './providers/smtp-email.config';
+import { SmtpEmailService } from './providers/smtp-email.service';
 
 @Module({
-  imports: [],
+  imports: [ConfigModule],
   providers: [
     {
       provide: 'SmtpEmailConfig',
@@ -31,6 +32,7 @@ import { Module } from '@nestjs/common';
         const emailServiceType = configService.get(
           'EMAIL_SERVICE',
         ) as EmailServiceType;
+
         if (emailServiceType === EmailServiceType.SMTP) return smtpEmailService;
         else throw new Error('Invalid email service type');
       },

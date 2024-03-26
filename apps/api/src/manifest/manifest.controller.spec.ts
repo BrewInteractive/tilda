@@ -5,6 +5,8 @@ import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
+import { EmailProcessor } from '../hook/email.processor';
+import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus } from '@nestjs/common';
@@ -12,9 +14,12 @@ import { ManifestController } from './manifest.controller';
 import { ManifestRequest } from './models';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
+import { SmtpEmailConfig } from '../email/providers/smtp-email.config';
+import { SmtpEmailService } from '../email/providers/smtp-email.service';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
+import { WebhookProcessor } from '../hook/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 jest.mock('../utils/crypto-helpers', () => ({
@@ -47,6 +52,15 @@ describe('ManifestController', () => {
       sendEmailAsync: jest.fn(),
       sendWebhookAsync: jest.fn(),
     };
+    const config = {
+      host: faker.internet.url(),
+      port: faker.number.int(),
+      secure: faker.datatype.boolean(),
+      auth: {
+        user: faker.internet.email(),
+        pass: faker.internet.password(),
+      },
+    } as SmtpEmailConfig;
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ManifestController],
       imports: [
@@ -56,6 +70,19 @@ describe('ManifestController', () => {
         }),
       ],
       providers: [
+        {
+          provide: ConfigService,
+          useValue: {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            get: jest.fn().mockImplementation((_: string) => {
+              return 'SMTP';
+            }),
+          },
+        },
+        {
+          provide: SmtpEmailConfig,
+          useValue: config,
+        },
         ValidationService,
         {
           provide: HookService,
@@ -66,15 +93,31 @@ describe('ManifestController', () => {
           useValue: {},
         },
         ManifestService,
+        { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
         {
-          provide: ConfigService,
+          provide: HookProcessorFactory,
           useValue: {
-            get: jest.fn(() =>
-              faker.string.hexadecimal({ length: 64, prefix: '' }),
-            ),
+            getProcessor: jest.fn(),
           },
         },
-        { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
+        {
+          provide: EmailProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: WebhookProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: SmtpEmailService,
+          useValue: {
+            sendEmailAsync: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

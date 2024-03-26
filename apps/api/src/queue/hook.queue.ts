@@ -5,12 +5,12 @@ import {
   Processor,
 } from '@nestjs/bull';
 
-import { HookFactory } from '../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
+import { Hook } from '../models';
+import { HookProcessorFactory } from '../hook/hook.factory';
 
 @Processor('hook-queue')
 export class HookQueue {
-  constructor(private readonly hookService: HookService) {}
+  constructor(private readonly hookFactory: HookProcessorFactory) {}
 
   @OnQueueError()
   OnQueueError(err: Error) {
@@ -23,9 +23,9 @@ export class HookQueue {
   }
 
   @Process()
-  async processHook(job) {
+  async processHook(job: { data: { hook: Hook } }) {
     const { factory, params } = job.data.hook;
-
-    await HookFactory.getHook(factory, this.hookService).execute(params);
+    const hookProcesser = this.hookFactory.getProcessor(factory);
+    await hookProcesser.execute(params);
   }
 }
