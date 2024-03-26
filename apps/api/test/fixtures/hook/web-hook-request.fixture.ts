@@ -1,4 +1,3 @@
-import { Enum } from './../../../src/validation/validators/enum';
 import { Mock } from 'mockingbird';
 import { WebhookHttpMethod } from '../../../src/models';
 import { WebhookParams } from '../../../src/models/hooks/web-hook-params.model';

@@ -1,19 +1,21 @@
-import { ManifestService } from './manifest.service';
-import { HttpService } from '@nestjs/axios';
-import { AxiosResponse } from 'axios';
-import { of } from 'rxjs';
+import { BullModule, getQueueToken } from '@nestjs/bull';
+import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { EmailParams, Hook, TildaManifest, WebhookParams } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
-import Ajv from 'ajv';
-import { BullModule, getQueueToken } from '@nestjs/bull';
-import { MockFactory } from 'mockingbird';
-import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
-import { faker } from '@faker-js/faker';
-import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { HookService } from '../hook/hook.service';
-import { HookFactory } from '../hook/hook.factory';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
+
+import Ajv from 'ajv';
+import { AxiosResponse } from 'axios';
+import { EmailRequest } from '../hook/models';
+import { HookFactory } from '../hook/hook.factory';
+import { HookService } from '../hook/hook.service';
+import { HttpService } from '@nestjs/axios';
+import { ManifestService } from './manifest.service';
+import { MockFactory } from 'mockingbird';
 import { PreHookResponse } from './models';
+import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { faker } from '@faker-js/faker';
+import { of } from 'rxjs';
 
 jest.mock('../hook/hook.factory');
 jest.mock('../utils/crypto-helpers', () => ({
@@ -201,20 +203,16 @@ describe('ManifestService', () => {
   });
   it('should add email post hooks to their respective queues with ui labels', async () => {
     const emailHookFixture = MockFactory(EmailHookFixture).one();
+    const dataWithUi = {
+      name: faker.person.firstName(),
+      surname: faker.person.lastName(),
+    };
+    (emailHookFixture.params as EmailRequest).dataWithUi = dataWithUi;
     const hooks: Hook[] = [{ ...emailHookFixture }];
-    const dataWithUi = [
-      {
-        name: faker.person.firstName(),
-      },
-      {
-        surname: faker.person.lastName(),
-      },
-    ];
-    await manifestService.handlePostHooks(hooks, dataWithUi);
+    await manifestService.handlePostHooks(hooks);
 
     expect(queueMock.add).toHaveBeenCalledWith({
       hook: hooks[0],
-      dataWithUi,
     });
   });
   it('should send webhook successfully', async () => {
@@ -660,14 +658,10 @@ describe('ManifestService', () => {
         testName: name,
       };
 
-      const expectedOutput = [
-        {
-          [manifest.data.fields['surname'].ui.label]: surname,
-        },
-        {
-          [manifest.data.fields['name'].ui.label]: name,
-        },
-      ];
+      const expectedOutput = {
+        [manifest.data.fields['surname'].ui.label]: surname,
+        [manifest.data.fields['name'].ui.label]: name,
+      };
 
       const generatedKeyValues = manifestService.getDataWithUiLabels(
         manifest as TildaManifest,

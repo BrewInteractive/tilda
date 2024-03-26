@@ -7,3 +7,4 @@ export * from './email-hook-params.model';
 export * from './email-recipient.model';
 export * from './hook-type.enum';
 export * from './webhook-http-method.enum';
+export * from './email-data-with-ui-labels.model';

@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import axios, { AxiosError, AxiosHeaders } from 'axios';
-import { WebHookRequestFixture } from '../../test/fixtures';
-import { MockFactory } from 'mockingbird';
-import { faker } from '@faker-js/faker';
-import { HookService } from './hook.service';
-import { EmailService } from '../email/email.service';
+
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../email/email.service';
+import { HookService } from './hook.service';
+import { MockFactory } from 'mockingbird';
+import { WebHookRequestFixture } from '../../test/fixtures';
+import { faker } from '@faker-js/faker';
 
 jest.mock('axios');
 const mockAxios = axios as jest.MockedFunction<typeof axios>;
@@ -111,7 +112,7 @@ describe('HookService', () => {
       ],
     };
 
-    await hookService.sendEmailAsync(emailRequest, undefined);
+    await hookService.sendEmailAsync(emailRequest);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
@@ -132,21 +133,18 @@ describe('HookService', () => {
     const fromEmail = faker.internet.email();
     jest.spyOn(configService, 'get').mockReturnValue(fromEmail);
 
+    const dataWithUi = {
+      name: faker.person.firstName(),
+      surname: faker.person.lastName(),
+    };
     const emailRequest = {
       recipients: [
         { 'email:enc': faker.internet.email() },
         { 'email:enc': faker.internet.email() },
       ],
+      dataWithUi: dataWithUi,
     };
-    const dataWithUi = [
-      {
-        name: faker.person.firstName(),
-      },
-      {
-        surname: faker.person.lastName(),
-      },
-    ];
-    await hookService.sendEmailAsync(emailRequest, dataWithUi);
+    await hookService.sendEmailAsync(emailRequest);
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
@@ -154,7 +152,7 @@ describe('HookService', () => {
     const expectedEmail = {
       from: fromEmail,
       subject: 'Tilda Run For Validation Result',
-      html: `<html><body><p>name: ${dataWithUi[0].name}</p><p>surname: ${dataWithUi[1].surname}</p></body></html>`,
+      html: `<html><body><p>name: ${dataWithUi.name}</p><p>surname: ${dataWithUi.surname}</p></body></html>`,
     };
     expect(sendEmailSpy).toHaveBeenCalledWith(
       expect.objectContaining(expectedEmail),

@@ -328,7 +328,7 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
-    jest.spyOn(manifestService, 'getDataWithUiLabels').mockReturnValue([{}]);
+    jest.spyOn(manifestService, 'getDataWithUiLabels').mockReturnValue({});
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
