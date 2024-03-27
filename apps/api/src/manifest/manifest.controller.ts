@@ -160,7 +160,8 @@ export class ManifestController {
         preHookResultsWithSuccess &&
         preHookResultsWithSuccess.filter(
           (hook) =>
-            !hook.success || (hook.response && hook.response.status != 200),
+            (hook.success != undefined && !hook.success) ||
+            (hook.response && hook.response.status != 200),
         ).length > 0
       ) {
         return res
