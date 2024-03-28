@@ -112,4 +112,43 @@ export class TildaManifestFixture implements TildaManifest {
   hmac: string;
   @Mock(DataFixture)
   data: DataFixture;
+  static getEncryptedValidManifestHMAC() {
+    return '44a98ec59c22d24b6b6a612b4acd90f68180237412e4c3e01dd1f913542dc9c4';
+  }
+
+  static getFirstRecipientEncryptedEmail() {
+    return '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
+  }
+
+  static getWebhookSuccessPath() {
+    return '$.response.success';
+  }
+
+  static getConstName1Value() {
+    return 'const value';
+  }
+
+  static getConstName2EncValue() {
+    return 'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
+  }
+  static getConstName2Value() {
+    return 'encrypted value';
+  }
+
+  static getFirstRecipientEmail() {
+    return 'example@mail.com';
+  }
+
+  static setInputNameForName() {
+    return 'testName';
+  }
+
+  static getWebhookValues() {
+    return {
+      nameSurname:
+        'Name: {$.fields.name.value} Surname: {$.fields.surname.value}',
+      nameConstValue: '{$.fields.name.const.constName1.value}',
+      surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
+    };
+  }
 }

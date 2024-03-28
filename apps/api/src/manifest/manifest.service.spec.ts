@@ -264,11 +264,9 @@ describe('ManifestService', () => {
     const result = await manifestService.handlePreHooks(hooks, secretKey);
 
     expect(result).toEqual([{ signature: mockHmacValue, ...mockResponse }]);
-
     expect(hookProcessorFactory.getProcessor).toHaveBeenCalledWith(
       hooks[0].factory,
     );
-
     expect(webHookProcessor.execute).toHaveBeenCalledWith(hooks[0].params);
   });
   it('should not send webhook with signatures', async () => {
@@ -471,10 +469,11 @@ describe('ManifestService', () => {
     const validManifest = MockFactory(TildaManifestFixture).one();
     (validManifest.data.hooks.post[0].params as EmailParams).recipients[0][
       'email:enc'
-    ] = 'example@mail.com';
-    validManifest.data.fields['name'].const['constName1'] = 'const value';
+    ] = TildaManifestFixture.getFirstRecipientEmail();
+    validManifest.data.fields['name'].const['constName1'] =
+      TildaManifestFixture.getConstName1Value();
     validManifest.data.fields['surname'].const['constName2:enc'] =
-      'encrypted value';
+      TildaManifestFixture.getConstName2Value();
 
     it('should encrypt email recipients in manifest', () => {
       const encryptedManifest = manifestService.encryptManifestEncFields(
@@ -500,10 +499,14 @@ describe('ManifestService', () => {
 
       Object.values(encryptedManifest.data.fields).forEach((field: any) => {
         if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).not.toBe('encrypted value');
+          expect(field.const['constName2:enc']).not.toBe(
+            TildaManifestFixture.getConstName2Value(),
+          );
         }
         if (field.const['constName1']) {
-          expect(field.const['constName1']).toBe('const value');
+          expect(field.const['constName1']).toBe(
+            TildaManifestFixture.getConstName1Value(),
+          );
         }
       });
     });
@@ -512,20 +515,22 @@ describe('ManifestService', () => {
   describe('Decryption Functions', () => {
     const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
     encryptedValidManifest.hmac =
-      '44a98ec59c22d24b6b6a612b4acd90f68180237412e4c3e01dd1f913542dc9c4';
+      TildaManifestFixture.getEncryptedValidManifestHMAC();
     (
       encryptedValidManifest.data.hooks.post[0].params as EmailParams
     ).recipients[0]['email:enc'] =
-      '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
+      TildaManifestFixture.getFirstRecipientEncryptedEmail();
     encryptedValidManifest.data.fields['name'].const['constName1'] =
-      'const value';
+      TildaManifestFixture.getConstName1Value();
     encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
-      'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
+      TildaManifestFixture.getConstName2EncValue();
 
     it('should decrypt email recipients in manifest', () => {
       (decrypt as jest.Mock)
-        .mockImplementationOnce(() => 'example@mail.com')
-        .mockImplementation(() => 'encrypted value');
+        .mockImplementationOnce(() =>
+          TildaManifestFixture.getFirstRecipientEmail(),
+        )
+        .mockImplementation(() => TildaManifestFixture.getConstName2Value());
 
       const decryptedManifest = manifestService.decryptManifestEncFields(
         encryptedValidManifest,
@@ -536,32 +541,36 @@ describe('ManifestService', () => {
         if (hook.factory === 'email') {
           const emailParams: any = hook.params;
           emailParams.recipients.forEach((recipient: any) => {
-            expect(recipient['email:enc']).toBe('example@mail.com');
+            expect(recipient['email:enc']).toBe(
+              TildaManifestFixture.getFirstRecipientEmail(),
+            );
           });
         }
       });
       Object.values(decryptedManifest.data.fields).forEach((field: any) => {
         if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).toBe('encrypted value');
+          expect(field.const['constName2:enc']).toBe(
+            TildaManifestFixture.getConstName2Value(),
+          );
         }
         if (field.const['constName1']) {
-          expect(field.const['constName1']).toBe('const value');
+          expect(field.const['constName1']).toBe(
+            TildaManifestFixture.getConstName1Value(),
+          );
         }
       });
     });
   });
   describe('Set Webhook Params Functions', () => {
     const validManifest = MockFactory(TildaManifestFixture).one();
-    validManifest.data.fields['name'].inputName = 'testName';
-    validManifest.data.fields['name'].const['constName1'] = 'const value';
+    validManifest.data.fields['name'].inputName =
+      TildaManifestFixture.setInputNameForName();
+    validManifest.data.fields['name'].const['constName1'] =
+      TildaManifestFixture.getConstName1Value();
     validManifest.data.fields['surname'].const['constName2:enc'] =
-      'encrypted value';
-    (validManifest.data.hooks.pre[0].params as WebhookParams).values = {
-      nameSurname:
-        'Name: {$.fields.name.value} Surname: {$.fields.surname.value}',
-      nameConstValue: '{$.fields.name.const.constName1.value}',
-      surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
-    };
+      TildaManifestFixture.getConstName2Value();
+    (validManifest.data.hooks.pre[0].params as WebhookParams).values =
+      TildaManifestFixture.getWebhookValues();
 
     it('should set webhook params values the correct output', () => {
       const manifest = JSON.parse(
@@ -578,21 +587,22 @@ describe('ManifestService', () => {
         surname,
         testName: name,
         name: name,
-        'testName.const.constName1': 'const value',
-        'name.const.constName1': 'const value',
-        'surname.const.constName2:enc': 'encrypted value',
+        'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'name.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'surname.const.constName2:enc':
+          TildaManifestFixture.getConstName2Value(),
       };
 
       const transformedPatternValues = {
         nameSurname: `${name} ${surname}`,
-        nameConstValue: 'const value',
-        surnameConstEncValue: 'encrypted value',
+        nameConstValue: TildaManifestFixture.getConstName1Value(),
+        surnameConstEncValue: TildaManifestFixture.getConstName2Value(),
       };
 
       const expectedValues = {
         nameSurname: `${name} ${surname}`,
-        nameConstValue: 'const value',
-        surnameConstEncValue: 'encrypted value',
+        nameConstValue: TildaManifestFixture.getConstName1Value(),
+        surnameConstEncValue: TildaManifestFixture.getConstName2Value(),
       };
 
       jest
@@ -627,9 +637,10 @@ describe('ManifestService', () => {
         surname,
         testName: name,
         name,
-        'testName.const.constName1': 'const value',
-        'name.const.constName1': 'const value',
-        'surname.const.constName2:enc': 'encrypted value',
+        'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'name.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'surname.const.constName2:enc':
+          TildaManifestFixture.getConstName2Value(),
       };
 
       const generatedKeyValues = manifestService.generateWebhookKeyValues(
@@ -654,9 +665,10 @@ describe('ManifestService', () => {
         surname,
         testName: name,
         name,
-        'testName.const.constName1': 'const value',
-        'name.const.constName1': 'const value',
-        'surname.const.constName2:enc': 'encrypted value',
+        'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'name.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'surname.const.constName2:enc':
+          TildaManifestFixture.getConstName2Value(),
       };
 
       const generatedKeyValues = manifestService.generateWebhookKeyValues(
@@ -677,13 +689,13 @@ describe('ManifestService', () => {
         surname,
         testName: name,
         name,
-        'testName.const.constName1': 'const value',
-        'name.const.constName1': 'const value',
+        'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
+        'name.const.constName1': TildaManifestFixture.getConstName1Value(),
       };
 
       const expectedValues = {
         nameSurname: 'Name: ' + name + ' Surname: ' + surname,
-        nameConstValue: 'const value',
+        nameConstValue: TildaManifestFixture.getConstName1Value(),
         surnameConstEncValue: '',
       };
 
