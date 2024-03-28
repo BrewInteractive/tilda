@@ -35,17 +35,17 @@ describe('ManifestController', () => {
   const validManifest = MockFactory(TildaManifestFixture).one();
   const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
   encryptedValidManifest.hmac =
-    '44a98ec59c22d24b6b6a612b4acd90f68180237412e4c3e01dd1f913542dc9c4';
+    TildaManifestFixture.getEncryptedValidManifestHMAC();
   (
     encryptedValidManifest.data.hooks.post[0].params as EmailParams
   ).recipients[0]['email:enc'] =
-    '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
+    TildaManifestFixture.getFirstRecipientEncryptedEmail();
   (encryptedValidManifest.data.hooks.pre[0].params as WebhookParams).success =
-    '$.response.success';
+    TildaManifestFixture.getWebhookSuccessPath();
   encryptedValidManifest.data.fields['name'].const['constName1'] =
-    'const value';
+    TildaManifestFixture.getConstName1Value();
   encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
-    'd2f9641add34ca1f65f20d38:efb52d71d555b6183b4eeaa8d21341:683dd0ae0f63f87f0a54d05d1563d5a7';
+    TildaManifestFixture.getConstName2EncValue();
 
   beforeEach(async () => {
     hookServiceMock = {
