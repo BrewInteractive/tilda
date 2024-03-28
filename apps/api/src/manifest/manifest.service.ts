@@ -21,8 +21,7 @@ import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { HookService } from '../hook/hook.service';
-import { HookFactory } from '../hook/hook.factory';
+import { HookProcessorFactory } from '../hook/hook.factory';
 import { PreHookResponse, ManifestRequest } from './models';
 
 @Injectable()
@@ -32,7 +31,7 @@ export class ManifestService {
     @Inject('Ajv')
     private readonly ajv: Ajv,
     @InjectQueue('hook-queue') private readonly hookQueue: Queue,
-    private readonly hookService: HookService,
+    private readonly hookFactory: HookProcessorFactory,
   ) {}
 
   async handlePostHooks(hooks: Hook[]): Promise<void> {
@@ -54,10 +53,9 @@ export class ManifestService {
       }
 
       if (!isHashValid) {
-        const result = await HookFactory.getHook(
-          factory,
-          this.hookService,
-        ).execute(params);
+        const result = await this.hookFactory
+          .getProcessor(factory)
+          .execute(params);
         const newSignature = generateHmac({ factory, params }, secretKey);
         preHookResult.push({ signature: newSignature, ...result });
       } else {

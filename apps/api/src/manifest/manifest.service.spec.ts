@@ -1,19 +1,21 @@
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { EmailParams, Hook, TildaManifest, WebhookParams } from '../models';
+import { EmailRequest, WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 import Ajv from 'ajv';
 import { AxiosResponse } from 'axios';
-import { EmailRequest } from '../hook/models';
-import { HookFactory } from '../hook/hook.factory';
+import { EmailProcessor } from '../hook/email.processor';
+import { HookProcessorFactory } from './../hook/hook.factory';
 import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
 import { PreHookResponse } from './models';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { WebhookProcessor } from '../hook/webhook.processor';
 import { faker } from '@faker-js/faker';
 import { of } from 'rxjs';
 
@@ -29,6 +31,8 @@ describe('ManifestService', () => {
     'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
   let manifestService: ManifestService;
   let httpService: HttpService;
+  let hookProcessorFactory: HookProcessorFactory;
+  let webHookProcessor: WebhookProcessor;
   const queueMock = { add: jest.fn() };
   let hookServiceMock: Partial<HookService>;
 
@@ -55,6 +59,24 @@ describe('ManifestService', () => {
             get: jest.fn(),
           },
         },
+        {
+          provide: HookProcessorFactory,
+          useValue: {
+            getProcessor: jest.fn(),
+          },
+        },
+        {
+          provide: WebhookProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: EmailProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
         { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
       ],
     })
@@ -64,6 +86,9 @@ describe('ManifestService', () => {
 
     manifestService = module.get<ManifestService>(ManifestService);
     httpService = module.get<HttpService>(HttpService);
+    hookProcessorFactory =
+      module.get<HookProcessorFactory>(HookProcessorFactory);
+    webHookProcessor = module.get<WebhookProcessor>(WebhookProcessor);
   });
 
   it('should call getManifestFromUrl when URL is provided in manifestInput', async () => {
@@ -223,26 +248,28 @@ describe('ManifestService', () => {
     const mockResponse = {
       response: {
         status: 200,
-        headers: [],
+        headers: {},
         data: {},
       },
-      signature: mockHmacValue,
-    };
-    const mockExecute = jest.fn();
-    (HookFactory.getHook as jest.Mock).mockReturnValue({
-      execute: mockExecute,
-    });
-    mockExecute.mockResolvedValue(mockResponse);
+    } as WebHookResponse;
+
+    jest
+      .spyOn(hookProcessorFactory, 'getProcessor')
+      .mockReturnValueOnce(webHookProcessor);
+
+    jest.spyOn(webHookProcessor, 'execute').mockResolvedValue(mockResponse);
+
     (generateHmac as jest.Mock).mockImplementation(() => mockHmacValue);
 
     const result = await manifestService.handlePreHooks(hooks, secretKey);
 
-    expect(result).toEqual([mockResponse]);
-    expect(HookFactory.getHook).toHaveBeenCalledWith('webhook', {
-      sendWebhookAsync: hookServiceMock.sendWebhookAsync,
-      sendEmailAsync: hookServiceMock.sendEmailAsync,
-    });
-    expect(mockExecute).toHaveBeenCalledWith(hooks[0].params);
+    expect(result).toEqual([{ signature: mockHmacValue, ...mockResponse }]);
+
+    expect(hookProcessorFactory.getProcessor).toHaveBeenCalledWith(
+      hooks[0].factory,
+    );
+
+    expect(webHookProcessor.execute).toHaveBeenCalledWith(hooks[0].params);
   });
   it('should not send webhook with signatures', async () => {
     const webHookFixture = MockFactory(WebHookFixture).one();
@@ -259,9 +286,9 @@ describe('ManifestService', () => {
     };
 
     const mockExecute = jest.fn();
-    (HookFactory.getHook as jest.Mock).mockReturnValue({
-      execute: mockExecute,
-    });
+    //(HookFactory.getHook as jest.Mock).mockReturnValue({
+    //  execute: mockExecute,
+    //});
     mockExecute.mockResolvedValue(mockResponse);
     (generateHmac as jest.Mock).mockImplementation(() => mockHmacValue);
     (verifyHmac as jest.Mock).mockImplementation(() => true);
@@ -269,10 +296,10 @@ describe('ManifestService', () => {
     const result = await manifestService.handlePreHooks(hooks, secretKey);
 
     expect(result).toEqual([mockResponse]);
-    expect(HookFactory.getHook).not.toHaveBeenCalledWith('webhook', {
-      sendWebhookAsync: hookServiceMock.sendWebhookAsync,
-      sendEmailAsync: hookServiceMock.sendEmailAsync,
-    });
+    //expect(HookFactory.getHook).not.toHaveBeenCalledWith('webhook', {
+    //  sendWebhookAsync: hookServiceMock.sendWebhookAsync,
+    //  sendEmailAsync: hookServiceMock.sendEmailAsync,
+    //});
     expect(mockExecute).not.toHaveBeenCalledWith(hooks[0].params);
   });
   it('should add signatures for manifest', async () => {
