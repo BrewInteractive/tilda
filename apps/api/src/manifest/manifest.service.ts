@@ -338,7 +338,7 @@ export class ManifestService {
       if (resultNavigation) {
         const navigationPath = resultNavigation.substring(2);
         const result = this.navigateToObjectProperty(
-          preHookResult,
+          preHookResult.response.data,
           navigationPath,
         );
         if (result !== undefined) {

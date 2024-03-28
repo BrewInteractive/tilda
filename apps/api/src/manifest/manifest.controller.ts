@@ -169,7 +169,7 @@ export class ManifestController {
           .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
       }
 
-      manifestResponse.data.hooks.post
+      manifestWithPreSignatures.data.hooks.post
         .filter((x) => x.factory === HookType.email)
         .forEach(async (hook) => {
           (hook.params as EmailRequest).dataWithUi = dataWithUi;

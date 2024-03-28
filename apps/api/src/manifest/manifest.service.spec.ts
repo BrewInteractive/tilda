@@ -411,8 +411,20 @@ describe('ManifestService', () => {
 
   it('should correctly process pre-hooks results and update success property based on the navigation path', () => {
     const preHooksResults: PreHookResponse[] = [
-      { data: { id: 1, value: 'test1' }, params: { success: '$.data.value' } },
-      { data: { id: 2, value: 'test2' }, params: { success: '$.data.id' } },
+      {
+        response: {
+          status: 200,
+          headers: {},
+          data: { id: 1, value: 'test1', test: { success: true } },
+        },
+      },
+      {
+        response: {
+          status: 200,
+          headers: {},
+          data: { id: 2, value: 'test2', test: { success: false } },
+        },
+      },
     ];
     const manifest = {
       hmac: '',
@@ -420,8 +432,8 @@ describe('ManifestService', () => {
         fields: {},
         hooks: {
           pre: [
-            { factory: 'webhook', params: { success: '$.data.value' } },
-            { factory: 'webhook', params: { success: '$.data.id' } },
+            { factory: 'webhook', params: { success: '$.test.success' } },
+            { factory: 'webhook', params: { success: '$.test.success' } },
           ],
         },
       },
@@ -429,14 +441,20 @@ describe('ManifestService', () => {
 
     const expectedResults = [
       {
-        data: { id: 1, value: 'test1' },
-        params: { success: '$.data.value' },
-        success: 'test1',
+        response: {
+          status: 200,
+          headers: {},
+          data: { id: 1, value: 'test1', test: { success: true } },
+        },
+        success: true,
       },
       {
-        data: { id: 2, value: 'test2' },
-        params: { success: '$.data.id' },
-        success: 2,
+        response: {
+          status: 200,
+          headers: {},
+          data: { id: 2, value: 'test2', test: { success: false } },
+        },
+        success: false,
       },
     ];
 
@@ -444,6 +462,8 @@ describe('ManifestService', () => {
       preHooksResults,
       manifest,
     );
+    console.log(newPreHooksResults);
+
     expect(newPreHooksResults).toEqual(expectedResults);
   });
 
