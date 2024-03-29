@@ -470,7 +470,6 @@ describe('ManifestService', () => {
       preHooksResults,
       manifest,
     );
-    console.log(newPreHooksResults);
 
     expect(newPreHooksResults).toEqual(expectedResults);
   });

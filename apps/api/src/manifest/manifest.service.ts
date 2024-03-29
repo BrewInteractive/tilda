@@ -249,16 +249,17 @@ export class ManifestService {
       [key: string]: string;
     };
     const regexPattern = `\\{(?:\\${Constants.prefixPattern})?fields\\.([^}]+)\\}`;
+    const fieldPlaceholderPattern = new RegExp(regexPattern);
+    const globalFieldPlaceholderPattern = new RegExp(regexPattern, 'g');
 
     Object.entries(valuesCopy).forEach(([key, value]) => {
       const originalValue = value;
-      const matches = originalValue.match(new RegExp(regexPattern, 'g'));
-      console.log('matches', matches);
+      const matches = originalValue.match(globalFieldPlaceholderPattern);
 
       if (matches) {
         let transformedValue = originalValue;
         matches.forEach((match) => {
-          const fieldPattern = new RegExp(regexPattern);
+          const fieldPattern = fieldPlaceholderPattern;
           const field = match
             .replace(fieldPattern, '$1')
             .replace('.value', '')
