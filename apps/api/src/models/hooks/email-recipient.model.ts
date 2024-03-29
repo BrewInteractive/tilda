@@ -1,3 +1,5 @@
+import { Constants } from '../constants';
+
 export interface EmailRecipient {
-  'email:enc': string;
+  [Constants.emailSuffix]: string;
 }

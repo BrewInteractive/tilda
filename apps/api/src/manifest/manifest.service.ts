@@ -2,11 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import {
+  Constants,
   DataWithUiLabels,
   EmailParams,
   EmailRecipient,
   Field,
   Hook,
+  HookType,
   TildaManifest,
   WebhookParams,
 } from '../models';
@@ -127,14 +129,17 @@ export class ManifestService {
     secret: string,
   ): void => {
     emailRecipients.forEach((recipient) => {
-      recipient['email:enc'] = encrypt(recipient['email:enc'], secret);
+      recipient[Constants.emailSuffix] = encrypt(
+        recipient[Constants.emailSuffix],
+        secret,
+      );
     });
   };
 
   encryptFieldConstValues = (field: Field, secret: string): void => {
     Object.keys(field.const).forEach((constKey: string) => {
       const constValue = field.const[constKey];
-      if (constKey.endsWith(':enc')) {
+      if (constKey.endsWith(Constants.encryptSuffix)) {
         field.const[constKey] = encrypt(constValue, secret);
       }
     });
@@ -145,7 +150,7 @@ export class ManifestService {
     secret: string,
   ): TildaManifest => {
     manifest.data.hooks.post.forEach((hook: Hook) => {
-      if (hook.factory === 'email') {
+      if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.encryptManifestEmailRecipients(emailParams.recipients, secret);
       }
@@ -163,7 +168,10 @@ export class ManifestService {
     secret: string,
   ): void => {
     emailRecipients.forEach((recipient) => {
-      recipient['email:enc'] = decrypt(recipient['email:enc'], secret);
+      recipient[Constants.emailSuffix] = decrypt(
+        recipient[Constants.emailSuffix],
+        secret,
+      );
     });
   };
 
@@ -172,7 +180,7 @@ export class ManifestService {
     secret: string,
   ): TildaManifest => {
     manifest.data.hooks.post.forEach((hook: Hook) => {
-      if (hook.factory === 'email') {
+      if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.decryptManifestEmailRecipients(emailParams.recipients, secret);
       }
@@ -187,7 +195,7 @@ export class ManifestService {
   decryptFieldConstValues = (field: Field, secret: string): void => {
     Object.keys(field.const).forEach((constKey: string) => {
       const constValue = field.const[constKey];
-      if (constKey.endsWith(':enc')) {
+      if (constKey.endsWith(Constants.encryptSuffix)) {
         field.const[constKey] = decrypt(constValue, secret);
       }
     });
@@ -240,20 +248,24 @@ export class ManifestService {
     const valuesCopy = JSON.parse(JSON.stringify(values)) as {
       [key: string]: string;
     };
+    const regexPattern = `\\{(?:\\${Constants.prefixPattern})?fields\\.([^}]+)\\}`;
 
     Object.entries(valuesCopy).forEach(([key, value]) => {
       const originalValue = value;
-      const matches = originalValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
+      const matches = originalValue.match(new RegExp(regexPattern, 'g'));
+      console.log('matches', matches);
+
       if (matches) {
         let transformedValue = originalValue;
         matches.forEach((match) => {
+          const fieldPattern = new RegExp(regexPattern);
           const field = match
-            .replace(/\{(?:\$\.)?fields\.([^}]+)\}/, '$1')
+            .replace(fieldPattern, '$1')
             .replace('.value', '')
-            .replace(':enc', '');
+            .replace(Constants.encryptSuffix, '');
           transformedValue = transformedValue.replace(
             match,
-            output[field] || output[`${field}:enc`] || '',
+            output[field] || output[field + Constants.encryptSuffix] || '',
           );
         });
         transformedValues[key] = transformedValue;
@@ -273,7 +285,7 @@ export class ManifestService {
     const transformHookParamsValues = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
         if (
-          hook.factory === 'webhook' &&
+          hook.factory === HookType.webhook &&
           hook.params &&
           (hook.params as WebhookParams).values
         ) {
@@ -332,17 +344,21 @@ export class ManifestService {
   ): PreHookResponse[] {
     const newPreHooksResults = JSON.parse(JSON.stringify(preHooksResults));
     newPreHooksResults.forEach((preHookResult, index) => {
-      const hook = manifest.data.hooks.pre[index];
-      const resultNavigation = (hook.params as WebhookParams).success;
+      if (preHookResult.response) {
+        const hook = manifest.data.hooks.pre[index];
+        const resultNavigation = (hook.params as WebhookParams).success;
 
-      if (resultNavigation) {
-        const navigationPath = resultNavigation.substring(2);
-        const result = this.navigateToObjectProperty(
-          preHookResult.response.data,
-          navigationPath,
-        );
-        if (result !== undefined) {
-          preHookResult.success = result;
+        if (resultNavigation) {
+          const navigationPath = resultNavigation.substring(
+            Constants.prefixPattern.length,
+          );
+          const result = this.navigateToObjectProperty(
+            preHookResult.response.data,
+            navigationPath,
+          );
+          if (result !== undefined) {
+            preHookResult.success = result;
+          }
         }
       }
     });

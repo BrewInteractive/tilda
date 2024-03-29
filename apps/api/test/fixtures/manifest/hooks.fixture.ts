@@ -1,4 +1,4 @@
-import { Hook, HookType } from '../../../src/models';
+import { Constants, Hook, HookType } from '../../../src/models';
 
 import { Mock } from 'mockingbird';
 import { WebHookRequestFixture } from '../hook/web-hook-request.fixture';
@@ -9,10 +9,10 @@ class EmailRequestFixture {
     type: Array,
     count: 1,
     of: {
-      'email:enc': faker.internet.email(),
+      [Constants.emailSuffix]: faker.internet.email(),
     },
   })
-  recipients: Array<{ 'email:enc': string }>;
+  recipients: Array<{ [Constants.emailSuffix]: string }>;
 }
 
 export class WebHookFixture implements Hook {
