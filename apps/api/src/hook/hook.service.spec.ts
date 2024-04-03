@@ -63,49 +63,6 @@ describe('HookService', () => {
     );
   });
 
-  it('should navigate to the specified property and return its value', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-        contact: {
-          email: faker.internet.email(),
-          phone: faker.phone.number(),
-        },
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = hookService.navigateToObjectProperty(object, propertyPath);
-    expect(result).toBe(object.user.contact.email);
-  });
-
-  it('should return undefined for non-existent property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = hookService.navigateToObjectProperty(object, propertyPath);
-    expect(result).toBeUndefined();
-  });
-
-  it('should handle empty property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = '';
-    const result = hookService.navigateToObjectProperty(object, propertyPath);
-    expect(result).toBe(undefined);
-  });
-
   it('should handle error during webhook send', async () => {
     const headers = new AxiosHeaders();
 
@@ -143,6 +100,7 @@ describe('HookService', () => {
       );
     }
   });
+
   it('should send emails for each recipient', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();
@@ -218,5 +176,48 @@ describe('HookService', () => {
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should navigate to the specified property and return its value', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+        contact: {
+          email: faker.internet.email(),
+          phone: faker.phone.number(),
+        },
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBe(object.user.contact.email);
+  });
+
+  it('should return undefined for non-existent property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle empty property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = '';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBe(undefined);
   });
 });
