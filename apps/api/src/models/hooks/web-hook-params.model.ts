@@ -5,5 +5,5 @@ export interface WebhookParams extends HookParams {
   headers?: string[];
   method: WebhookHttpMethod;
   values?: { [key: string]: string };
-  success?: string;
+  success_path?: string;
 }

@@ -51,7 +51,7 @@ describe('HookService', () => {
 
     const result = await hookService.sendWebhookAsync(webHookRequest);
 
-    expect(result).toEqual({ response: mockResponse });
+    expect(result).toEqual({ response: mockResponse, success: true });
   });
 
   it('should handle error during webhook send', async () => {
@@ -61,6 +61,49 @@ describe('HookService', () => {
     await expect(hookService.sendWebhookAsync(webHookRequest)).rejects.toThrow(
       'ERROR',
     );
+  });
+
+  it('should navigate to the specified property and return its value', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+        contact: {
+          email: faker.internet.email(),
+          phone: faker.phone.number(),
+        },
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBe(object.user.contact.email);
+  });
+
+  it('should return undefined for non-existent property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = 'user.contact.email';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle empty property path', () => {
+    const object = {
+      user: {
+        id: 1,
+        name: faker.person.fullName(),
+      },
+    };
+
+    const propertyPath = '';
+    const result = hookService.navigateToObjectProperty(object, propertyPath);
+    expect(result).toBe(undefined);
   });
 
   it('should handle error during webhook send', async () => {

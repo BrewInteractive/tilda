@@ -1,4 +1,5 @@
 import { EmailParams, WebhookParams } from '../models';
+import { ManifestRequest, PreHookResponse } from './models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
@@ -11,7 +12,6 @@ import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus } from '@nestjs/common';
 import { ManifestController } from './manifest.controller';
-import { ManifestRequest } from './models';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
 import { SmtpEmailConfig } from '../email/providers/smtp-email.config';
@@ -40,8 +40,9 @@ describe('ManifestController', () => {
     encryptedValidManifest.data.hooks.post[0].params as EmailParams
   ).recipients[0]['email:enc'] =
     '24b5b244948a45caa4415a15:9283a0fdfbbb6e3a804fe5ebb938bfcf:872cc965688f2299bc67cd67105423c1';
-  (encryptedValidManifest.data.hooks.pre[0].params as WebhookParams).success =
-    '$.response.success';
+  (
+    encryptedValidManifest.data.hooks.pre[0].params as WebhookParams
+  ).success_path = '$.response.success';
   encryptedValidManifest.data.fields['name'].const['constName1'] =
     'const value';
   encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
@@ -214,16 +215,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          success: true,
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -233,7 +224,7 @@ describe('ManifestController', () => {
           headers: { 'content-type': 'application/json' },
         },
         success: true,
-      },
+      } as PreHookResponse,
     ];
     jest
       .spyOn(manifestService, 'getManifest')
@@ -250,11 +241,8 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
-    jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -284,16 +272,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          success: false,
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -321,10 +299,7 @@ describe('ManifestController', () => {
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
-    jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -354,15 +329,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -370,6 +336,7 @@ describe('ManifestController', () => {
           status: 200,
           headers: { 'content-type': 'application/json' },
         },
+        success: true,
       },
     ];
     jest
@@ -388,10 +355,7 @@ describe('ManifestController', () => {
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
-    jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -428,7 +392,8 @@ describe('ManifestController', () => {
           status: 400,
           headers: { 'content-type': 'application/json' },
         },
-      },
+        success: false,
+      } as PreHookResponse,
     ];
 
     jest

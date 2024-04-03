@@ -1,4 +1,4 @@
-import { HookInterface } from './hook.interface';
+import { HookInterface } from './models/hook.interface';
 import { HookService } from './hook.service';
 import { Injectable } from '@nestjs/common';
 import { WebHookResponse } from './models';

@@ -15,7 +15,13 @@ export class HookService {
 
   async sendWebhookAsync(params: WebhookParams): Promise<WebHookResponse> {
     try {
-      const { url, headers: headerStrings, method, values } = params;
+      const {
+        url,
+        headers: headerStrings,
+        method,
+        values,
+        success_path,
+      } = params;
       const headers = {};
 
       for (const header of headerStrings) {
@@ -49,13 +55,27 @@ export class HookService {
       console.log('Webhook Request Detail:', axiosConfig);
       console.log('Webhook Response Detail:', result.status, result.data);
 
-      return {
+      const hookResult = {
         response: {
           status: result.status,
           headers: result.headers,
           data: result.data,
         },
-      };
+        success: result.status === 200,
+      } as WebHookResponse;
+
+      if (success_path) {
+        const navigationPath = success_path.substring(2);
+        const result = this.navigateToObjectProperty(
+          hookResult.response.data,
+          navigationPath,
+        );
+        if (result !== undefined) {
+          hookResult.success = result;
+        }
+      }
+
+      return hookResult;
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error('AxiosError:', error.message);
@@ -65,7 +85,8 @@ export class HookService {
             headers: error.response.headers,
             data: error.response.data,
           },
-        };
+          success: false,
+        } as WebHookResponse;
       } else {
         console.error('Error Message:', error.message);
         throw error;
@@ -90,7 +111,8 @@ export class HookService {
       }
     }
   }
-  private generateHtmlContent(dataWithUi?: DataWithUiLabels): string {
+
+  generateHtmlContent(dataWithUi?: DataWithUiLabels): string {
     let htmlContent = '<html><body>';
 
     if (dataWithUi) {
@@ -101,5 +123,18 @@ export class HookService {
 
     htmlContent += '</body></html>';
     return htmlContent;
+  }
+
+  navigateToObjectProperty(object, propertyPath: string) {
+    const parts = propertyPath.split('.');
+    let current = object;
+    for (const part of parts) {
+      if (current && Object.hasOwnProperty.call(current, part)) {
+        current = current[part];
+      } else {
+        return undefined;
+      }
+    }
+    return current;
   }
 }
