@@ -13,7 +13,7 @@ const mockValidatorFactory = {
         return {
           getValidator: jest.fn(() => ({
             type: 'string',
-            pattern: '^[a-zA-Z\\s]+$',
+            pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$',
           })),
         };
       case 'regex':
@@ -74,6 +74,15 @@ describe('ValidationService', () => {
   it('should validate a single field with valid data successfully', () => {
     const data = {
       name: faker.string.alpha(10),
+    };
+
+    const result = validationService.validate(data, validManifest.data);
+    expect(result.success).toBe(true);
+  });
+
+  it('should validate a single field with turkish valid data successfully', () => {
+    const data = {
+      name: 'çÇğĞıİöÖşŞüÜ',
     };
 
     const result = validationService.validate(data, validManifest.data);
