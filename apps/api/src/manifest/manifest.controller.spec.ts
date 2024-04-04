@@ -504,14 +504,15 @@ describe('ManifestController', () => {
       .spyOn(manifestService, 'decryptManifestEncFields')
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'validateManifest').mockReturnValue(true);
+    const validationResult = [
+      {
+        path: '#/properties/name/pattern',
+        message: 'must match pattern "^[a-zA-Z\\s]+$"',
+      },
+    ];
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: false,
-      errors: [
-        {
-          path: '#/properties/surname/pattern',
-          message: 'must match pattern "^[a-zA-Z\\s]+$"',
-        },
-      ],
+      errors: validationResult,
     });
     (verifyHmac as jest.Mock).mockReturnValue(true);
 
@@ -524,8 +525,7 @@ describe('ManifestController', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      errors:
-        'must match pattern "^[a-zA-Z\\s]+$" (Path: #/properties/name/pattern)',
+      validationResult: { success: false, errors: validationResult },
     });
   });
   it('should handle Hash is not valid error', async () => {
@@ -553,7 +553,7 @@ describe('ManifestController', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      errors: 'Hash is not valid',
+      error: 'Hash is not valid',
     });
   });
   it('should handle internal server error', async () => {
