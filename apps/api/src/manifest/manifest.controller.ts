@@ -128,11 +128,7 @@ export class ManifestController {
       );
 
       if (!validationResult.success) {
-        throw new InvalidValidationError(
-          validationResult.errors
-            .map((error) => `${error.message} (Path: ${error.path})`)
-            .join(', '),
-        );
+        throw new InvalidValidationError(validationResult);
       }
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
@@ -172,13 +168,14 @@ export class ManifestController {
         .status(HttpStatus.OK)
         .json({ validationResult, hook: { pre: preHooksResults } });
     } catch (error) {
-      if (
-        error instanceof InvalidValidationError ||
-        error instanceof HmacError
-      ) {
+      if (error instanceof HmacError) {
         return res
           .status(HttpStatus.BAD_REQUEST)
-          .json({ errors: error.message });
+          .json({ error: error.message });
+      } else if (error instanceof InvalidValidationError) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ validationResult: error.validationResult });
       } else
         return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)

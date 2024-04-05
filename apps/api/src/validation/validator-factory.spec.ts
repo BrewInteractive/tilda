@@ -42,7 +42,7 @@ describe('ValidatorFactory', () => {
       const alphaValidator = factory.getValidator(ValidatorType.alpha) as Alpha;
       const expectedData = {
         type: 'string',
-        pattern: '^[a-zA-Z\\s]+$',
+        pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$',
       };
       const validator = alphaValidator.getValidator();
       expect(validator).toEqual(expectedData);

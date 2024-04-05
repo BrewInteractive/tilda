@@ -4,7 +4,7 @@ export class Alpha implements ValidatorInterface {
   getValidator(): any {
     return {
       type: 'string',
-      pattern: '^[a-zA-Z\\s]+$',
+      pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$',
     };
   }
 }
