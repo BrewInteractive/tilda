@@ -9,7 +9,7 @@ import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { HookInterface } from '../models/hook.interface';
 import { Injectable } from '@nestjs/common';
-import { generateGuid } from '../../utils/guid-generator';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class DataCordProcessor implements HookInterface {
@@ -32,7 +32,7 @@ export class DataCordProcessor implements HookInterface {
 
     const postData = new URLSearchParams({
       LanguageCode: 'tr',
-      Guid: generateGuid(),
+      Guid: uuidv4(),
       Name: params.values.name,
       Surname: params.values.surname,
       PhoneNumber: params.values.phoneNumber,

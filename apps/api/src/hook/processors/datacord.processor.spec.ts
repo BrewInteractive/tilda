@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { DataCordProcessor } from './datacord.processor';
 import axios from 'axios';
 import { faker } from '@faker-js/faker';
-import { generateGuid } from '../../utils/guid-generator';
 
 jest.mock('axios');
 const mockAxios = axios as jest.MockedFunction<typeof axios>;
@@ -48,7 +47,7 @@ describe('DataCordProcessor', () => {
   it('should return success response type', async () => {
     const tokenResponse = {
       status: 200,
-      data: { Token: generateGuid() },
+      data: { Token: faker.lorem.paragraph() },
     };
     const dataCordResponse = {
       status: 200,
@@ -93,7 +92,7 @@ describe('DataCordProcessor', () => {
     const tokenResponse = {
       status: 400,
       headers: {},
-      data: { Token: generateGuid() },
+      data: { Token: faker.lorem.paragraph() },
     };
     mockAxios.mockResolvedValueOnce(tokenResponse);
 
