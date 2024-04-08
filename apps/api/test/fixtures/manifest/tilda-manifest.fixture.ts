@@ -1,6 +1,12 @@
 import { Mock } from 'mockingbird';
 import { faker } from '@faker-js/faker';
-import { Field, Hook, HookType, TildaManifest } from '../../../src/models';
+import {
+  Constants,
+  Field,
+  Hook,
+  HookType,
+  TildaManifest,
+} from '../../../src/models';
 
 class UiFixture {
   @Mock(() => faker.lorem.word())
@@ -80,7 +86,7 @@ class PreHookFixture {
 }
 class EmailPostHookRecipientsFixture {
   @Mock(() => faker.internet.email())
-  'email:enc': string;
+  [Constants.emailSuffix]: string;
 }
 class PostHookParamsFixture {
   @Mock({ type: EmailPostHookRecipientsFixture, count: 1, required: false })
@@ -121,7 +127,7 @@ export class TildaManifestFixture implements TildaManifest {
   }
 
   static getWebhookSuccessPath() {
-    return '$.response.success';
+    return Constants.prefixPattern + 'response.success';
   }
 
   static getConstName1Value() {
@@ -146,9 +152,17 @@ export class TildaManifestFixture implements TildaManifest {
   static getWebhookValues() {
     return {
       nameSurname:
-        'Name: {$.fields.name.value} Surname: {$.fields.surname.value}',
-      nameConstValue: '{$.fields.name.const.constName1.value}',
-      surnameConstEncValue: '{$.fields.surname.const.constName2.value}',
+        'Name: {' +
+        Constants.prefixPattern +
+        'fields.name.value} Surname: {' +
+        Constants.prefixPattern +
+        'fields.surname.value}',
+      nameConstValue:
+        '{' + Constants.prefixPattern + 'fields.name.const.constName1.value}',
+      surnameConstEncValue:
+        '{' +
+        Constants.prefixPattern +
+        'fields.surname.const.constName2.value}',
     };
   }
 }

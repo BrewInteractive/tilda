@@ -1,4 +1,4 @@
-import { DataWithUiLabels } from '../../models';
+import { Constants, DataWithUiLabels } from '../../models';
 
 export class EmailRequest {
   recipients: Recipient[];
@@ -6,5 +6,5 @@ export class EmailRequest {
 }
 
 class Recipient {
-  'email:enc': string;
+  [Constants.emailSuffix]: string;
 }

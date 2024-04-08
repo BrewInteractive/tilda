@@ -1,4 +1,4 @@
-import { EmailParams, WebhookParams } from '../models';
+import { Constants, EmailParams, WebhookParams } from '../models';
 import { ManifestRequest, PreHookResponse } from './models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
@@ -36,15 +36,16 @@ describe('ManifestController', () => {
     TildaManifestFixture.getEncryptedValidManifestHMAC();
   (
     encryptedValidManifest.data.hooks.post[0].params as EmailParams
-  ).recipients[0]['email:enc'] =
+  ).recipients[0][Constants.emailSuffix] =
     TildaManifestFixture.getFirstRecipientEncryptedEmail();
   (
     encryptedValidManifest.data.hooks.pre[0].params as WebhookParams
   ).success_path = TildaManifestFixture.getWebhookSuccessPath();
   encryptedValidManifest.data.fields['name'].const['constName1'] =
     TildaManifestFixture.getConstName1Value();
-  encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
-    TildaManifestFixture.getConstName2EncValue();
+  encryptedValidManifest.data.fields['surname'].const[
+    'constName2' + Constants.encryptSuffix
+  ] = TildaManifestFixture.getConstName2EncValue();
 
   beforeEach(async () => {
     const config = {

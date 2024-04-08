@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigService } from '@nestjs/config';
+import { Constants } from '../../models';
 import { EmailProcessor } from './email.processor';
 import { EmailService } from '../../email/email.service';
 import { faker } from '@faker-js/faker';
@@ -41,8 +42,8 @@ describe('EmailProcessor', () => {
 
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
       ],
     };
 
@@ -77,8 +78,8 @@ describe('EmailProcessor', () => {
     };
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
       ],
       dataWithUi: dataWithUi,
     };
@@ -102,15 +103,15 @@ describe('EmailProcessor', () => {
     );
   });
 
-  it('should not send email for recipients without email:enc', async () => {
+  it('should not send email for recipients without Constants.emailSuffix', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();
     jest.spyOn(configService, 'get').mockReturnValue(fromEmail);
 
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': null },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: null },
       ],
     };
 
