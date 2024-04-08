@@ -1,5 +1,3 @@
-import { Mock } from 'mockingbird';
-import { faker } from '@faker-js/faker';
 import {
   Constants,
   Field,
@@ -7,6 +5,9 @@ import {
   HookType,
   TildaManifest,
 } from '../../../src/models';
+
+import { Mock } from 'mockingbird';
+import { faker } from '@faker-js/faker';
 
 class UiFixture {
   @Mock(() => faker.lorem.word())

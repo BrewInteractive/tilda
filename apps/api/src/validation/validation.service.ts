@@ -1,6 +1,6 @@
 import Ajv from 'ajv';
 import { Inject, Injectable } from '@nestjs/common';
-import { Field, TildaData, Validator } from '../models';
+import { Field, TildaData, Validator, ValidatorType } from '../models';
 import { ValidatorFactory } from './validator-factory';
 import { ValidationResult } from './models/validation-result';
 
@@ -22,7 +22,7 @@ export class ValidationService {
     const customValidator = this.validatorFactory.getValidator(factory);
     if (customValidator) {
       // If the field is required, add it to the schema required array
-      if (factory === 'notEmpty') {
+      if (factory === ValidatorType.notEmpty) {
         schema.required = schema.required || [];
         schema.required.push(fieldName);
       }

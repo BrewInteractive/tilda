@@ -1,5 +1,5 @@
+import { Constants, WebhookHttpMethod, WebhookParams } from '../../models';
 import { Test, TestingModule } from '@nestjs/testing';
-import { WebhookHttpMethod, WebhookParams } from '../../models';
 import axios, { AxiosError, AxiosHeaders } from 'axios';
 
 import { MockFactory } from 'mockingbird';
@@ -100,7 +100,7 @@ describe('WebHookProcessor', () => {
     const webHookRequest = {
       ...MockFactory(WebHookRequestFixture).one(),
       method: WebhookHttpMethod.POST,
-      success_path: '$.level1.level2.successIndicator',
+      success_path: Constants.prefixPattern + 'level1.level2.successIndicator',
     } as WebhookParams;
 
     const result = await webHookProcessor.execute(webHookRequest);
@@ -128,7 +128,8 @@ describe('WebHookProcessor', () => {
       method: WebhookHttpMethod.GET,
       headers: ['Accept: application/json'],
       values: {},
-      success_path: '$.someProperty.anotherProperty.targetProperty',
+      success_path:
+        Constants.prefixPattern + 'someProperty.anotherProperty.targetProperty',
     };
 
     const result = await webHookProcessor.sendWebhookAsync(webHookRequest);
