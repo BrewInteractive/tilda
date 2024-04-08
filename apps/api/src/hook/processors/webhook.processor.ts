@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { HookInterface } from '../models/hook.interface';
 import { Injectable } from '@nestjs/common';
 import { WebHookResponse } from '../models';
+import { navigateToObjectProperty } from '../../utils/object-helpers';
 
 @Injectable()
 export class WebhookProcessor implements HookInterface {
@@ -66,7 +67,7 @@ export class WebhookProcessor implements HookInterface {
 
       if (success_path) {
         const navigationPath = success_path.substring(2);
-        const result = this.navigateToObjectProperty(
+        const result = navigateToObjectProperty(
           hookResult.response.data,
           navigationPath,
         );
@@ -92,18 +93,5 @@ export class WebhookProcessor implements HookInterface {
         throw error;
       }
     }
-  }
-
-  navigateToObjectProperty(object, propertyPath: string) {
-    const parts = propertyPath.split('.');
-    let current = object;
-    for (const part of parts) {
-      if (current && Object.hasOwnProperty.call(current, part)) {
-        current = current[part];
-      } else {
-        return undefined;
-      }
-    }
-    return current;
   }
 }
