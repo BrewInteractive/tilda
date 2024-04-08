@@ -23,6 +23,10 @@ export class SmtpEmailService extends EmailService {
   }
 
   async sendEmailAsync(email: Email): Promise<void> {
-    await this.transporter.sendMail(email);
+    try {
+      await this.transporter.sendMail(email);
+    } catch (error) {
+      console.log('Email sending failed:', error);
+    }
   }
 }

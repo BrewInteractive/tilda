@@ -115,6 +115,23 @@ describe('ManifestService', () => {
     );
   });
 
+  it('should return manifest when Manifest is provided in manifestInput', async () => {
+    const mockTildaManifest = MockFactory(
+      TildaManifestFixture,
+    ).one() as TildaManifest;
+
+    // Arrange
+    const manifestInput = {
+      manifest: mockTildaManifest,
+    };
+
+    // Act
+    const actual = await manifestService.getManifest(manifestInput);
+
+    // Assert
+    expect(actual).toEqual(mockTildaManifest);
+  });
+
   it('should call getManifestFromBase64 when base64 is provided in manifestInput', async () => {
     const mockTildaManifest = MockFactory(
       TildaManifestFixture,
