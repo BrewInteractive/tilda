@@ -1,6 +1,13 @@
 import { BullModule, getQueueToken } from '@nestjs/bull';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
-import { EmailParams, Hook, TildaManifest, WebhookParams } from '../models';
+import {
+  Constants,
+  EmailParams,
+  Hook,
+  HookType,
+  TildaManifest,
+  WebhookParams,
+} from '../models';
 import { EmailRequest, WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
@@ -355,7 +362,7 @@ describe('ManifestService', () => {
       MockFactory(TildaManifestFixture).one();
     (
       requiredPostHookInvalidEmailRegex.data.hooks.post[0].params as EmailParams
-    ).recipients[0]['email:enc'] = 'examplemail.com';
+    ).recipients[0][Constants.emailSuffix] = 'examplemail.com';
 
     test.each([
       [validManifest, true],
@@ -427,17 +434,16 @@ describe('ManifestService', () => {
   it('should correctly process pre-hooks results and update success property based on the navigation path', () => {
     const preHooksResults: PreHookResponse[] = [
       {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 1, value: 'test1', test: { success: true } },
-        },
+        message: '',
+        factory: HookType.webhook,
+        params: { success: true },
+        signature: '',
       },
       {
         response: {
           status: 200,
           headers: {},
-          data: { id: 2, value: 'test2', test: { success: false } },
+          data: { id: 2, value: 'test2', test: { success: true } },
         },
       },
     ];
@@ -447,8 +453,14 @@ describe('ManifestService', () => {
         fields: {},
         hooks: {
           pre: [
-            { factory: 'webhook', params: { success: '$.test.success' } },
-            { factory: 'webhook', params: { success: '$.test.success' } },
+            {
+              factory: HookType.webhook,
+              params: { success: Constants.prefixPattern + 'test.success' },
+            },
+            {
+              factory: HookType.webhook,
+              params: { success: Constants.prefixPattern + 'test.success' },
+            },
           ],
         },
       },
@@ -456,20 +468,18 @@ describe('ManifestService', () => {
 
     const expectedResults = [
       {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 1, value: 'test1', test: { success: true } },
-        },
-        success: true,
+        message: '',
+        factory: HookType.webhook,
+        params: { success: true },
+        signature: '',
       },
       {
         response: {
           status: 200,
           headers: {},
-          data: { id: 2, value: 'test2', test: { success: false } },
+          data: { id: 2, value: 'test2', test: { success: true } },
         },
-        success: false,
+        success: true,
       },
     ];
 
@@ -477,7 +487,6 @@ describe('ManifestService', () => {
       preHooksResults,
       manifest,
     );
-    console.log(newPreHooksResults);
 
     expect(newPreHooksResults).toEqual(expectedResults);
   });
@@ -485,12 +494,13 @@ describe('ManifestService', () => {
   describe('Encryption Functions', () => {
     const validManifest = MockFactory(TildaManifestFixture).one();
     (validManifest.data.hooks.post[0].params as EmailParams).recipients[0][
-      'email:enc'
+      Constants.emailSuffix
     ] = TildaManifestFixture.getFirstRecipientEmail();
     validManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    validManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2Value();
+    validManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2Value();
 
     it('should encrypt email recipients in manifest', () => {
       const encryptedManifest = manifestService.encryptManifestEncFields(
@@ -499,10 +509,12 @@ describe('ManifestService', () => {
       );
 
       encryptedManifest.data.hooks.post.forEach((hook: any) => {
-        if (hook.factory === 'email') {
+        if (hook.factory === HookType.email) {
           const emailParams: any = hook.params;
           emailParams.recipients.forEach((recipient: any) => {
-            expect(recipient['email:enc']).not.toBe('example@mail.com');
+            expect(recipient[Constants.emailSuffix]).not.toBe(
+              'example@mail.com',
+            );
           });
         }
       });
@@ -515,8 +527,8 @@ describe('ManifestService', () => {
       );
 
       Object.values(encryptedManifest.data.fields).forEach((field: any) => {
-        if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).not.toBe(
+        if (field.const['constName2' + Constants.encryptSuffix]) {
+          expect(field.const['constName2' + Constants.encryptSuffix]).not.toBe(
             TildaManifestFixture.getConstName2Value(),
           );
         }
@@ -535,12 +547,13 @@ describe('ManifestService', () => {
       TildaManifestFixture.getEncryptedValidManifestHMAC();
     (
       encryptedValidManifest.data.hooks.post[0].params as EmailParams
-    ).recipients[0]['email:enc'] =
+    ).recipients[0][Constants.emailSuffix] =
       TildaManifestFixture.getFirstRecipientEncryptedEmail();
     encryptedValidManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2EncValue();
+    encryptedValidManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2EncValue();
 
     it('should decrypt email recipients in manifest', () => {
       (decrypt as jest.Mock)
@@ -555,18 +568,18 @@ describe('ManifestService', () => {
       );
 
       decryptedManifest.data.hooks.post.forEach((hook: any) => {
-        if (hook.factory === 'email') {
+        if (hook.factory === HookType.email) {
           const emailParams: any = hook.params;
           emailParams.recipients.forEach((recipient: any) => {
-            expect(recipient['email:enc']).toBe(
+            expect(recipient[Constants.emailSuffix]).toBe(
               TildaManifestFixture.getFirstRecipientEmail(),
             );
           });
         }
       });
       Object.values(decryptedManifest.data.fields).forEach((field: any) => {
-        if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).toBe(
+        if (field.const['constName2' + Constants.encryptSuffix]) {
+          expect(field.const['constName2' + Constants.encryptSuffix]).toBe(
             TildaManifestFixture.getConstName2Value(),
           );
         }
@@ -584,8 +597,9 @@ describe('ManifestService', () => {
       TildaManifestFixture.setInputNameForName();
     validManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    validManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2Value();
+    validManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2Value();
     (validManifest.data.hooks.pre[0].params as WebhookParams).values =
       TildaManifestFixture.getWebhookValues();
 
@@ -606,7 +620,7 @@ describe('ManifestService', () => {
         name: name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 
@@ -656,7 +670,7 @@ describe('ManifestService', () => {
         name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 
@@ -684,7 +698,7 @@ describe('ManifestService', () => {
         name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 

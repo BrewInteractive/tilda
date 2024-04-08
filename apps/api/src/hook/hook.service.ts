@@ -4,7 +4,12 @@ import { EmailRequest, WebHookResponse } from './models';
 import { EmailService } from '../email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { Email } from '../email/dto/email.dto';
-import { DataWithUiLabels, WebhookHttpMethod, WebhookParams } from '../models';
+import {
+  Constants,
+  DataWithUiLabels,
+  WebhookHttpMethod,
+  WebhookParams,
+} from '../models';
 
 @Injectable()
 export class HookService {
@@ -74,7 +79,7 @@ export class HookService {
   }
   async sendEmailAsync(params: EmailRequest): Promise<void> {
     for (const recipient of params.recipients) {
-      const recipientEmail = recipient['email:enc'];
+      const recipientEmail = recipient[Constants.emailSuffix];
 
       if (recipientEmail) {
         const htmlContent = this.generateHtmlContent(params.dataWithUi);

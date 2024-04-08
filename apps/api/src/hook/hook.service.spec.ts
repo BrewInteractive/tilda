@@ -7,6 +7,7 @@ import { HookService } from './hook.service';
 import { MockFactory } from 'mockingbird';
 import { WebHookRequestFixture } from '../../test/fixtures';
 import { faker } from '@faker-js/faker';
+import { Constants } from '../models';
 
 jest.mock('axios');
 const mockAxios = axios as jest.MockedFunction<typeof axios>;
@@ -107,8 +108,8 @@ describe('HookService', () => {
 
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
       ],
     };
 
@@ -139,8 +140,8 @@ describe('HookService', () => {
     };
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: faker.internet.email() },
       ],
       dataWithUi: dataWithUi,
     };
@@ -159,15 +160,15 @@ describe('HookService', () => {
     );
   });
 
-  it('should not send email for recipients without email:enc', async () => {
+  it('should not send email for recipients without Constants.emailSuffix', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();
     jest.spyOn(configService, 'get').mockReturnValue(fromEmail);
 
     const emailRequest = {
       recipients: [
-        { 'email:enc': faker.internet.email() },
-        { 'email:enc': null },
+        { [Constants.emailSuffix]: faker.internet.email() },
+        { [Constants.emailSuffix]: null },
       ],
     };
 

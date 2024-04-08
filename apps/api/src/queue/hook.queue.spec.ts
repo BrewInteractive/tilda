@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { EmailProcessor } from '../hook/email.processor';
 import { EmailRequest } from '../hook/models';
-import { Hook } from '../models';
+import { Constants, Hook, HookType } from '../models';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
 import { HookService } from '../hook/hook.service';
@@ -63,11 +63,11 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'email',
+          factory: HookType.email,
           params: {
             recipients: [
               {
-                'email:enc': faker.internet.email(),
+                [Constants.emailSuffix]: faker.internet.email(),
               },
             ],
           } as EmailRequest,
@@ -90,11 +90,11 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'email',
+          factory: HookType.email,
           params: {
             recipients: [
               {
-                'email:enc': faker.internet.email(),
+                [Constants.emailSuffix]: faker.internet.email(),
               },
             ],
             dataWithUi: {
@@ -123,7 +123,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'webhook',
+          factory: HookType.webhook,
           params: {
             ...webHookParams,
           },
