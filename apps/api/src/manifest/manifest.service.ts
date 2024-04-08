@@ -25,7 +25,6 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { PreHookResponse, ManifestRequest } from './models';
-import { navigateToObjectProperty } from '../utils/object-helpers';
 
 @Injectable()
 export class ManifestService {
@@ -337,31 +336,4 @@ export class ManifestService {
     }
     return dataWithUiLabels;
   };
-
-  processPreHooksResultsSuccess(
-    preHooksResults: PreHookResponse[],
-    manifest: TildaManifest,
-  ): PreHookResponse[] {
-    const newPreHooksResults = JSON.parse(JSON.stringify(preHooksResults));
-    newPreHooksResults.forEach((preHookResult, index) => {
-      if (preHookResult.response) {
-        const hook = manifest.data.hooks.pre[index];
-        const resultNavigation = (hook.params as WebhookParams).success_path;
-
-        if (resultNavigation) {
-          const navigationPath = resultNavigation.substring(
-            Constants.prefixPattern.length,
-          );
-          const result = navigateToObjectProperty(
-            preHookResult.response.data,
-            navigationPath,
-          );
-          if (result !== undefined) {
-            preHookResult.success = result;
-          }
-        }
-      }
-    });
-    return newPreHooksResults;
-  }
 }
