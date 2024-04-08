@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { DataCordProcessor } from './datacord.processor';
 import { EmailProcessor } from './email.processor';
 import { HookProcessorFactory } from './hook.factory';
 import { HookService } from './hook.service';
@@ -15,6 +16,7 @@ describe('HookProcessorFactory', () => {
   let moduleRef: ModuleRef;
   let factory: HookProcessorFactory;
   let emailProcessor: EmailProcessor;
+  let dataCordProcessor: DataCordProcessor;
   let webhookProcessor: WebhookProcessor;
 
   beforeEach(async () => {
@@ -67,6 +69,12 @@ describe('HookProcessorFactory', () => {
           },
         },
         {
+          provide: DataCordProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
           provide: WebhookProcessor,
           useValue: {
             execute: jest.fn(),
@@ -84,6 +92,7 @@ describe('HookProcessorFactory', () => {
     moduleRef = module.get<ModuleRef>(ModuleRef);
     emailProcessor = module.get<EmailProcessor>(EmailProcessor);
     webhookProcessor = module.get<WebhookProcessor>(WebhookProcessor);
+    dataCordProcessor = module.get<DataCordProcessor>(DataCordProcessor);
     factory = new HookProcessorFactory(moduleRef);
   });
 
@@ -99,6 +108,13 @@ describe('HookProcessorFactory', () => {
 
     const processor = factory.getProcessor(HookType.webhook);
     expect(processor).toBe(webhookProcessor);
+  });
+
+  it('should return an instance of DataCordProcesser for HookType.datacord', () => {
+    jest.spyOn(moduleRef, 'get').mockImplementation(() => dataCordProcessor);
+
+    const processor = factory.getProcessor(HookType.datacord);
+    expect(processor).toBe(dataCordProcessor);
   });
 
   it('should throw an error for unsupported hook types', () => {
