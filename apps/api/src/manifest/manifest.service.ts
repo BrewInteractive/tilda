@@ -87,12 +87,18 @@ export class ManifestService {
   async getManifest(
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {
-    if (!manifestInput.url && !manifestInput.base64) {
+    if (
+      !manifestInput.url &&
+      !manifestInput.base64 &&
+      !manifestInput.manifest
+    ) {
       throw new GetManifestError(`One of url or base64 should be provided`);
     }
-    return manifestInput.base64
-      ? await this.getManifestFromBase64(manifestInput.base64)
-      : await this.getManifestFromUrl(manifestInput.url);
+    return manifestInput.manifest
+      ? manifestInput.manifest
+      : manifestInput.base64
+        ? await this.getManifestFromBase64(manifestInput.base64)
+        : await this.getManifestFromUrl(manifestInput.url);
   }
 
   async getManifestFromUrl(url: string): Promise<TildaManifest> {
