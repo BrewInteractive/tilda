@@ -1,11 +1,11 @@
 import { Injectable, Type } from '@nestjs/common';
 
-import { DataCordProcessor } from './datacord.processor';
-import { EmailProcessor } from './email.processor';
+import { DataCordProcessor } from './processors/datacord.processor';
+import { EmailProcessor } from './processors/email.processor';
 import { HookInterface } from './models/hook.interface';
 import { HookType } from '../models';
 import { ModuleRef } from '@nestjs/core';
-import { WebhookProcessor } from './webhook.processor';
+import { WebhookProcessor } from './processors/webhook.processor';
 
 @Injectable()
 export class HookProcessorFactory {

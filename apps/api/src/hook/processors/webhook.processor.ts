@@ -1,17 +1,17 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { WebhookHttpMethod, WebhookParams } from '../../models';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { EmailRequest, WebHookResponse } from './models';
-import { EmailService } from '../email/email.service';
-import { ConfigService } from '@nestjs/config';
-import { Email } from '../email/dto/email.dto';
-import { DataWithUiLabels, WebhookHttpMethod, WebhookParams } from '../models';
+
+import { HookInterface } from '../models/hook.interface';
+import { Injectable } from '@nestjs/common';
+import { WebHookResponse } from '../models';
 
 @Injectable()
-export class HookService {
-  constructor(
-    @Inject('EmailService') private readonly emailService: EmailService,
-    private readonly configService: ConfigService,
-  ) {}
+export class WebhookProcessor implements HookInterface {
+  constructor() {}
+
+  async execute(params: WebhookParams): Promise<WebHookResponse> {
+    return this.sendWebhookAsync(params);
+  }
 
   async sendWebhookAsync(params: WebhookParams): Promise<WebHookResponse> {
     try {
@@ -92,37 +92,6 @@ export class HookService {
         throw error;
       }
     }
-  }
-  async sendEmailAsync(params: EmailRequest): Promise<void> {
-    for (const recipient of params.recipients) {
-      const recipientEmail = recipient['email:enc'];
-
-      if (recipientEmail) {
-        const htmlContent = this.generateHtmlContent(params.dataWithUi);
-
-        const email = {
-          from: this.configService.get('SMTP.AUTH.USER'),
-          to: recipientEmail,
-          subject: 'Tilda Run For Validation Result',
-          html: htmlContent,
-        } as Email;
-
-        this.emailService.sendEmailAsync(email);
-      }
-    }
-  }
-
-  generateHtmlContent(dataWithUi?: DataWithUiLabels): string {
-    let htmlContent = '<html><body>';
-
-    if (dataWithUi) {
-      for (const key in dataWithUi) {
-        htmlContent += `<p>${key}: ${dataWithUi[key]}</p>`;
-      }
-    }
-
-    htmlContent += '</body></html>';
-    return htmlContent;
   }
 
   navigateToObjectProperty(object, propertyPath: string) {

@@ -1,15 +1,14 @@
 import { ConfigService } from '@nestjs/config';
-import { DataCordProcessor } from './datacord.processor';
-import { EmailProcessor } from './email.processor';
+import { DataCordProcessor } from './processors/datacord.processor';
+import { EmailProcessor } from './processors/email.processor';
 import { HookProcessorFactory } from './hook.factory';
-import { HookService } from './hook.service';
 import { HookType } from '../models';
 import { HttpService } from '@nestjs/axios';
 import { ModuleRef } from '@nestjs/core';
 import { SmtpEmailConfig } from '../email/providers/smtp-email.config';
 import { SmtpEmailService } from '../email/providers/smtp-email.service';
 import { Test } from '@nestjs/testing';
-import { WebhookProcessor } from './webhook.processor';
+import { WebhookProcessor } from './processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 describe('HookProcessorFactory', () => {
@@ -20,10 +19,6 @@ describe('HookProcessorFactory', () => {
   let webhookProcessor: WebhookProcessor;
 
   beforeEach(async () => {
-    const hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const config = {
       host: faker.internet.url(),
       port: faker.number.int(),
@@ -47,10 +42,6 @@ describe('HookProcessorFactory', () => {
         {
           provide: SmtpEmailConfig,
           useValue: config,
-        },
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
         },
         {
           provide: HttpService,

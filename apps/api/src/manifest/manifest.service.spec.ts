@@ -7,14 +7,13 @@ import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 import Ajv from 'ajv';
 import { AxiosResponse } from 'axios';
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { HookProcessorFactory } from './../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 import { of } from 'rxjs';
 
@@ -33,13 +32,8 @@ describe('ManifestService', () => {
   let hookProcessorFactory: HookProcessorFactory;
   let webHookProcessor: WebhookProcessor;
   const queueMock = { add: jest.fn() };
-  let hookServiceMock: Partial<HookService>;
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         BullModule.registerQueue({
@@ -48,10 +42,6 @@ describe('ManifestService', () => {
       ],
       providers: [
         ManifestService,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HttpService,
           useValue: {

@@ -6,9 +6,8 @@ import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { HookProcessorFactory } from '../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus } from '@nestjs/common';
 import { ManifestController } from './manifest.controller';
@@ -19,7 +18,7 @@ import { SmtpEmailService } from '../email/providers/smtp-email.service';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 jest.mock('../utils/crypto-helpers', () => ({
@@ -30,7 +29,6 @@ describe('ManifestController', () => {
   let manifestController: ManifestController;
   let manifestService: ManifestService;
   let validationService: ValidationService;
-  let hookServiceMock: Partial<HookService>;
 
   const validManifest = MockFactory(TildaManifestFixture).one();
   const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
@@ -49,10 +47,6 @@ describe('ManifestController', () => {
     TildaManifestFixture.getConstName2EncValue();
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const config = {
       host: faker.internet.url(),
       port: faker.number.int(),
@@ -85,10 +79,6 @@ describe('ManifestController', () => {
           useValue: config,
         },
         ValidationService,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HttpService,
           useValue: {},
