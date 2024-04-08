@@ -80,4 +80,29 @@ describe('WebHookProcessor', () => {
       );
     }
   });
+
+  it('should set success based on the navigation of success_path', async () => {
+    const nestedSuccessValue = true;
+    const mockResponse = {
+      data: {
+        level1: {
+          level2: {
+            successIndicator: nestedSuccessValue,
+          },
+        },
+      },
+      status: 200,
+      headers: ['content-type: application/json'],
+    };
+    mockAxios.mockResolvedValueOnce(mockResponse);
+
+    const webHookRequest = {
+      ...MockFactory(WebHookRequestFixture).one(),
+      success_path: '$.level1.level2.successIndicator',
+    };
+
+    const result = await webHookProcessor.execute(webHookRequest);
+
+    expect(result.success).toEqual(nestedSuccessValue);
+  });
 });
