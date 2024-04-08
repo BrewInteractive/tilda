@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { WebhookHttpMethod, WebhookParams } from '../../models';
 import axios, { AxiosError, AxiosHeaders } from 'axios';
 
 import { MockFactory } from 'mockingbird';
@@ -98,11 +99,40 @@ describe('WebHookProcessor', () => {
 
     const webHookRequest = {
       ...MockFactory(WebHookRequestFixture).one(),
+      method: WebhookHttpMethod.POST,
       success_path: '$.level1.level2.successIndicator',
-    };
+    } as WebhookParams;
 
     const result = await webHookProcessor.execute(webHookRequest);
 
     expect(result.success).toEqual(nestedSuccessValue);
+  });
+
+  it('should set success based on the success_path for GET method', async () => {
+    const successPathValue = true;
+    const mockResponse = {
+      data: {
+        someProperty: {
+          anotherProperty: {
+            targetProperty: successPathValue,
+          },
+        },
+      },
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    };
+    mockAxios.mockResolvedValueOnce(mockResponse);
+
+    const webHookRequest = {
+      url: 'http://example.com/api/data',
+      method: WebhookHttpMethod.GET,
+      headers: ['Accept: application/json'],
+      values: {},
+      success_path: '$.someProperty.anotherProperty.targetProperty',
+    };
+
+    const result = await webHookProcessor.sendWebhookAsync(webHookRequest);
+
+    expect(result.success).toEqual(successPathValue);
   });
 });
