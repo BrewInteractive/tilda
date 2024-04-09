@@ -4,7 +4,7 @@ import { HookResponse } from '../models/hook-response.interface';
 import { Inject, Injectable } from '@nestjs/common';
 import { EmailService } from '../../email/email.service';
 import { ConfigService } from '@nestjs/config';
-import { DataWithUiLabels } from '../../models';
+import { Constants, DataWithUiLabels } from '../../models';
 import { Email } from '../../email/dto/email.dto';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class EmailProcessor implements HookInterface {
 
   async sendEmailAsync(params: EmailRequest): Promise<void> {
     for (const recipient of params.recipients) {
-      const recipientEmail = recipient['email:enc'];
+      const recipientEmail = recipient[Constants.emailSuffix];
 
       if (recipientEmail) {
         const htmlContent = this.generateHtmlContent(params.dataWithUi);
