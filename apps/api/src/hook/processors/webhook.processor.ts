@@ -1,4 +1,4 @@
-import { WebhookHttpMethod, WebhookParams } from '../../models';
+import { Constants, WebhookHttpMethod, WebhookParams } from '../../models';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
 import { HookInterface } from '../models/hook.interface';
@@ -66,7 +66,9 @@ export class WebhookProcessor implements HookInterface {
       } as WebHookResponse;
 
       if (success_path) {
-        const navigationPath = success_path.substring(2);
+        const navigationPath = success_path.substring(
+          Constants.prefixPattern.length,
+        );
         const result = navigateToObjectProperty(
           hookResult.response.data,
           navigationPath,
