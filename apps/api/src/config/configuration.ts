@@ -26,6 +26,6 @@ export default () => ({
     PASSWORD: process.env.DATACORD_PASSWORD,
     USER: process.env.DATACORD_USER,
     URL: process.env.DATACORD_URL,
-    PAGE_URL: process.env.DATACORD_PAGE_URL,
+    GUID: process.env.DATACORD_GUID,
   },
 });

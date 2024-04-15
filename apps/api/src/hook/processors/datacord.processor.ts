@@ -9,7 +9,6 @@ import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { HookInterface } from '../models/hook.interface';
 import { Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class DataCordProcessor implements HookInterface {
@@ -32,15 +31,12 @@ export class DataCordProcessor implements HookInterface {
 
     const postData = new URLSearchParams({
       LanguageCode: 'tr',
-      Guid: uuidv4(),
+      Guid: this.configService.get('DATACORD.GUID'),
       Name: params.values.name,
       Surname: params.values.surname,
       PhoneNumber: params.values.phoneNumber,
       MailAddress: params.values.mailAddress,
       BirthDate: params.values.birthDate,
-      VendorCode: '',
-      LocalId: '',
-      LocalPageUrl: this.configService.get('DATACORD.PAGE_URL'),
     });
 
     const result = await axios({
