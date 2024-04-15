@@ -59,9 +59,14 @@ export class ManifestService {
           .getProcessor(factory)
           .execute(params);
         const newSignature = generateHmac({ factory, params }, secretKey);
-        preHookResult.push({ signature: newSignature, ...result });
+        preHookResult.push({
+          signature: newSignature,
+          success: result?.success,
+          ...result,
+        });
       } else {
         preHookResult.push({
+          success: false,
           message:
             'The pre-hook request was not sent because the signatures are the same',
           ...hook,
@@ -331,44 +336,4 @@ export class ManifestService {
     }
     return dataWithUiLabels;
   };
-
-  navigateToObjectProperty(object, propertyPath: string) {
-    const parts = propertyPath.split('.');
-    let current = object;
-    for (const part of parts) {
-      if (current && Object.hasOwnProperty.call(current, part)) {
-        current = current[part];
-      } else {
-        return undefined;
-      }
-    }
-    return current;
-  }
-
-  processPreHooksResultsSuccess(
-    preHooksResults: PreHookResponse[],
-    manifest: TildaManifest,
-  ): PreHookResponse[] {
-    const newPreHooksResults = JSON.parse(JSON.stringify(preHooksResults));
-    newPreHooksResults.forEach((preHookResult, index) => {
-      if (preHookResult.response) {
-        const hook = manifest.data.hooks.pre[index];
-        const resultNavigation = (hook.params as WebhookParams).success;
-
-        if (resultNavigation) {
-          const navigationPath = resultNavigation.substring(
-            Constants.prefixPattern.length,
-          );
-          const result = this.navigateToObjectProperty(
-            preHookResult.response.data,
-            navigationPath,
-          );
-          if (result !== undefined) {
-            preHookResult.success = result;
-          }
-        }
-      }
-    });
-    return newPreHooksResults;
-  }
 }

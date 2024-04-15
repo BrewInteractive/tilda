@@ -1,17 +1,16 @@
 import { Constants, EmailParams, WebhookParams } from '../models';
+import { ManifestRequest, PreHookResponse } from './models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { HookProcessorFactory } from '../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus } from '@nestjs/common';
 import { ManifestController } from './manifest.controller';
-import { ManifestRequest } from './models';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
 import { SmtpEmailConfig } from '../email/providers/smtp-email.config';
@@ -19,7 +18,7 @@ import { SmtpEmailService } from '../email/providers/smtp-email.service';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
 import { ValidationModule } from '../validation/validation.module';
 import { ValidationService } from '../validation/validation.service';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 jest.mock('../utils/crypto-helpers', () => ({
@@ -30,7 +29,6 @@ describe('ManifestController', () => {
   let manifestController: ManifestController;
   let manifestService: ManifestService;
   let validationService: ValidationService;
-  let hookServiceMock: Partial<HookService>;
 
   const validManifest = MockFactory(TildaManifestFixture).one();
   const encryptedValidManifest = MockFactory(TildaManifestFixture).one();
@@ -40,8 +38,9 @@ describe('ManifestController', () => {
     encryptedValidManifest.data.hooks.post[0].params as EmailParams
   ).recipients[0][Constants.emailSuffix] =
     TildaManifestFixture.getFirstRecipientEncryptedEmail();
-  (encryptedValidManifest.data.hooks.pre[0].params as WebhookParams).success =
-    TildaManifestFixture.getWebhookSuccessPath();
+  (
+    encryptedValidManifest.data.hooks.pre[0].params as WebhookParams
+  ).success_path = TildaManifestFixture.getWebhookSuccessPath();
   encryptedValidManifest.data.fields['name'].const['constName1'] =
     TildaManifestFixture.getConstName1Value();
   encryptedValidManifest.data.fields['surname'].const[
@@ -49,10 +48,6 @@ describe('ManifestController', () => {
   ] = TildaManifestFixture.getConstName2EncValue();
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const config = {
       host: faker.internet.url(),
       port: faker.number.int(),
@@ -85,10 +80,6 @@ describe('ManifestController', () => {
           useValue: config,
         },
         ValidationService,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HttpService,
           useValue: {},
@@ -215,16 +206,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          success: true,
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -234,7 +215,7 @@ describe('ManifestController', () => {
           headers: { 'content-type': 'application/json' },
         },
         success: true,
-      },
+      } as PreHookResponse,
     ];
     jest
       .spyOn(manifestService, 'getManifest')
@@ -251,11 +232,8 @@ describe('ManifestController', () => {
       .mockReturnValue(encryptedValidManifest);
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
-    jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -285,16 +263,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          success: false,
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -322,10 +290,7 @@ describe('ManifestController', () => {
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
-    jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -355,15 +320,6 @@ describe('ManifestController', () => {
       surname: faker.string.alpha(10),
       prehookSignatures: [faker.string.alpha(10)],
     };
-    const preHookResult = [
-      {
-        response: {
-          data: faker.string.alpha(),
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      },
-    ];
     const preHookResultWithSuccess = [
       {
         response: {
@@ -371,6 +327,7 @@ describe('ManifestController', () => {
           status: 200,
           headers: { 'content-type': 'application/json' },
         },
+        success: true,
       },
     ];
     jest
@@ -389,10 +346,7 @@ describe('ManifestController', () => {
     jest.spyOn(manifestService, 'handlePostHooks').mockResolvedValue();
     jest
       .spyOn(manifestService, 'handlePreHooks')
-      .mockResolvedValue(preHookResult);
-    jest
-      .spyOn(manifestService, 'processPreHooksResultsSuccess')
-      .mockReturnValue(preHookResultWithSuccess);
+      .mockResolvedValue(preHookResultWithSuccess);
     jest.spyOn(validationService, 'validate').mockReturnValue({
       success: true,
     });
@@ -429,7 +383,8 @@ describe('ManifestController', () => {
           status: 400,
           headers: { 'content-type': 'application/json' },
         },
-      },
+        success: false,
+      } as PreHookResponse,
     ];
 
     jest

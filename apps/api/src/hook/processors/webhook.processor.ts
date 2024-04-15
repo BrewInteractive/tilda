@@ -1,26 +1,28 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Constants, WebhookHttpMethod, WebhookParams } from '../../models';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { EmailRequest, WebHookResponse } from './models';
-import { EmailService } from '../email/email.service';
-import { ConfigService } from '@nestjs/config';
-import { Email } from '../email/dto/email.dto';
-import {
-  Constants,
-  DataWithUiLabels,
-  WebhookHttpMethod,
-  WebhookParams,
-} from '../models';
+
+import { HookInterface } from '../models/hook.interface';
+import { Injectable } from '@nestjs/common';
+import { WebHookResponse } from '../models';
+import { navigateToObjectProperty } from '../../utils/object-helpers';
 
 @Injectable()
-export class HookService {
-  constructor(
-    @Inject('EmailService') private readonly emailService: EmailService,
-    private readonly configService: ConfigService,
-  ) {}
+export class WebhookProcessor implements HookInterface {
+  constructor() {}
+
+  async execute(params: WebhookParams): Promise<WebHookResponse> {
+    return this.sendWebhookAsync(params);
+  }
 
   async sendWebhookAsync(params: WebhookParams): Promise<WebHookResponse> {
     try {
-      const { url, headers: headerStrings, method, values } = params;
+      const {
+        url,
+        headers: headerStrings,
+        method,
+        values,
+        success_path,
+      } = params;
       const headers = {};
 
       for (const header of headerStrings) {
@@ -54,13 +56,29 @@ export class HookService {
       console.log('Webhook Request Detail:', axiosConfig);
       console.log('Webhook Response Detail:', result.status, result.data);
 
-      return {
+      const hookResult = {
         response: {
           status: result.status,
           headers: result.headers,
           data: result.data,
         },
-      };
+        success: result.status === 200,
+      } as WebHookResponse;
+
+      if (success_path) {
+        const navigationPath = success_path.substring(
+          Constants.prefixPattern.length,
+        );
+        const result = navigateToObjectProperty(
+          hookResult.response.data,
+          navigationPath,
+        );
+        if (result !== undefined) {
+          hookResult.success = result;
+        }
+      }
+
+      return hookResult;
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error('AxiosError:', error.message);
@@ -70,41 +88,12 @@ export class HookService {
             headers: error.response.headers,
             data: error.response.data,
           },
-        };
+          success: false,
+        } as WebHookResponse;
       } else {
         console.error('Error Message:', error.message);
         throw error;
       }
     }
-  }
-  async sendEmailAsync(params: EmailRequest): Promise<void> {
-    for (const recipient of params.recipients) {
-      const recipientEmail = recipient[Constants.emailSuffix];
-
-      if (recipientEmail) {
-        const htmlContent = this.generateHtmlContent(params.dataWithUi);
-
-        const email = {
-          from: this.configService.get('SMTP.AUTH.USER'),
-          to: recipientEmail,
-          subject: 'Tilda Run For Validation Result',
-          html: htmlContent,
-        } as Email;
-
-        this.emailService.sendEmailAsync(email);
-      }
-    }
-  }
-  private generateHtmlContent(dataWithUi?: DataWithUiLabels): string {
-    let htmlContent = '<html><body>';
-
-    if (dataWithUi) {
-      for (const key in dataWithUi) {
-        htmlContent += `<p>${key}: ${dataWithUi[key]}</p>`;
-      }
-    }
-
-    htmlContent += '</body></html>';
-    return htmlContent;
   }
 }

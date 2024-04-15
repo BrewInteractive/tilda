@@ -1,26 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import axios, { AxiosError, AxiosHeaders } from 'axios';
 
 import { ConfigService } from '@nestjs/config';
-import { EmailService } from '../email/email.service';
-import { HookService } from './hook.service';
-import { MockFactory } from 'mockingbird';
-import { WebHookRequestFixture } from '../../test/fixtures';
+import { Constants } from '../../models';
+import { EmailProcessor } from './email.processor';
+import { EmailService } from '../../email/email.service';
 import { faker } from '@faker-js/faker';
-import { Constants } from '../models';
 
-jest.mock('axios');
-const mockAxios = axios as jest.MockedFunction<typeof axios>;
-
-describe('HookService', () => {
-  let hookService: HookService;
+describe('EmailProcessor', () => {
+  let emailProcessor: EmailProcessor;
   let emailService: EmailService;
   let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        HookService,
+        EmailProcessor,
         {
           provide: 'EmailService',
           useValue: {
@@ -36,71 +30,11 @@ describe('HookService', () => {
       ],
     }).compile();
 
-    hookService = module.get<HookService>(HookService);
+    emailProcessor = module.get<EmailProcessor>(EmailProcessor);
     emailService = module.get<EmailService>('EmailService');
     configService = module.get<ConfigService>(ConfigService);
   });
 
-  it('should send webhook successfully', async () => {
-    const mockResponse = {
-      data: faker.string.alpha(),
-      status: 200,
-      headers: ['content-type: application/json'],
-    };
-    mockAxios.mockResolvedValueOnce(mockResponse);
-    const webHookRequest = MockFactory(WebHookRequestFixture).one();
-
-    const result = await hookService.sendWebhookAsync(webHookRequest);
-
-    expect(result).toEqual({ response: mockResponse });
-  });
-
-  it('should handle error during webhook send', async () => {
-    mockAxios.mockRejectedValueOnce(new Error('ERROR'));
-    const webHookRequest = MockFactory(WebHookRequestFixture).one();
-
-    await expect(hookService.sendWebhookAsync(webHookRequest)).rejects.toThrow(
-      'ERROR',
-    );
-  });
-
-  it('should handle error during webhook send', async () => {
-    const headers = new AxiosHeaders();
-
-    const errorMock: AxiosError = new AxiosError('Axios error') as AxiosError;
-    errorMock.name = 'AxiosError';
-    errorMock.code = '500';
-    errorMock.request = {};
-    errorMock.response = {
-      status: 500,
-      statusText: 'Axios error',
-      headers: { 'content-type': 'application/json' },
-      config: { headers: headers },
-      data: { errors: [{ detail: 'Internal Server Error' }] },
-    };
-    errorMock.isAxiosError = true;
-    errorMock.toJSON = jest.fn();
-    mockAxios.mockRejectedValueOnce(errorMock);
-
-    const webHookRequest = MockFactory(WebHookRequestFixture).one();
-
-    try {
-      await hookService.sendWebhookAsync(webHookRequest);
-    } catch (error) {
-      expect(error).toBeInstanceOf(AxiosError);
-      expect(error.response.status).toBe(500);
-      expect(error.response.headers).toEqual({
-        'content-type': 'application/json',
-      });
-      expect(error.response.data).toEqual({
-        errors: [{ detail: 'Internal Server Error' }],
-      });
-      expect(console.error).toHaveBeenCalledWith(
-        'Error Message:',
-        'Axios error',
-      );
-    }
-  });
   it('should send emails for each recipient', async () => {
     const sendEmailSpy = jest.spyOn(emailService, 'sendEmailAsync');
     const fromEmail = faker.internet.email();
@@ -113,8 +47,12 @@ describe('HookService', () => {
       ],
     };
 
-    await hookService.sendEmailAsync(emailRequest);
+    const actual = await emailProcessor.execute(emailRequest);
 
+    expect(actual).toEqual({
+      success: true,
+      message: 'Email sent successfully',
+    });
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
@@ -145,8 +83,13 @@ describe('HookService', () => {
       ],
       dataWithUi: dataWithUi,
     };
-    await hookService.sendEmailAsync(emailRequest);
 
+    const actual = await emailProcessor.execute(emailRequest);
+
+    expect(actual).toEqual({
+      success: true,
+      message: 'Email sent successfully',
+    });
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
@@ -172,7 +115,12 @@ describe('HookService', () => {
       ],
     };
 
-    await hookService.sendEmailAsync(emailRequest);
+    const actual = await emailProcessor.execute(emailRequest);
+
+    expect(actual).toEqual({
+      success: true,
+      message: 'Email sent successfully',
+    });
 
     expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
     expect(sendEmailSpy).toHaveBeenCalledTimes(1);

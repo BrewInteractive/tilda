@@ -1,36 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { EmailRequest } from '../hook/models';
 import { Constants, Hook, HookType } from '../models';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
-import { HookService } from '../hook/hook.service';
 import { MockFactory } from 'mockingbird';
 import { WebHookRequestFixture } from '../../test/fixtures';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 describe('HookQueue', () => {
   let hookQueue: HookQueue;
-  let hookServiceMock: Partial<HookService>;
   let hookProcessorFactoryMock: HookProcessorFactory;
   let emailProcessorMock: EmailProcessor;
   let webHookProcessorMock: WebhookProcessor;
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HookQueue,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HookProcessorFactory,
           useValue: {

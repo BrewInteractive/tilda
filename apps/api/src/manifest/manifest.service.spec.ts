@@ -1,5 +1,4 @@
 import { BullModule, getQueueToken } from '@nestjs/bull';
-import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import {
   Constants,
   EmailParams,
@@ -8,21 +7,20 @@ import {
   TildaManifest,
   WebhookParams,
 } from '../models';
+import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
 import { EmailRequest, WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 import Ajv from 'ajv';
 import { AxiosResponse } from 'axios';
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { HookProcessorFactory } from './../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
-import { PreHookResponse } from './models';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 import { of } from 'rxjs';
 
@@ -41,13 +39,8 @@ describe('ManifestService', () => {
   let hookProcessorFactory: HookProcessorFactory;
   let webHookProcessor: WebhookProcessor;
   const queueMock = { add: jest.fn() };
-  let hookServiceMock: Partial<HookService>;
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         BullModule.registerQueue({
@@ -56,10 +49,6 @@ describe('ManifestService', () => {
       ],
       providers: [
         ManifestService,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HttpService,
           useValue: {
@@ -275,6 +264,7 @@ describe('ManifestService', () => {
         headers: {},
         data: {},
       },
+      success: true,
     } as WebHookResponse;
 
     jest
@@ -305,6 +295,7 @@ describe('ManifestService', () => {
       signature: mockHmacValue,
       message:
         'The pre-hook request was not sent because the signatures are the same',
+      success: false,
     };
 
     const mockExecute = jest.fn();
@@ -377,118 +368,6 @@ describe('ManifestService', () => {
         expect(isValid).toBe(expectedOutput);
       },
     );
-  });
-
-  it('should navigate to the specified property and return its value', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-        contact: {
-          email: faker.internet.email(),
-          phone: faker.phone.number(),
-        },
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBe(object.user.contact.email);
-  });
-
-  it('should return undefined for non-existent property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBeUndefined();
-  });
-
-  it('should handle empty property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = '';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBe(undefined);
-  });
-
-  it('should correctly process pre-hooks results and update success property based on the navigation path', () => {
-    const preHooksResults: PreHookResponse[] = [
-      {
-        message: '',
-        factory: HookType.webhook,
-        params: { success: true },
-        signature: '',
-      },
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 2, value: 'test2', test: { success: true } },
-        },
-      },
-    ];
-    const manifest = {
-      hmac: '',
-      data: {
-        fields: {},
-        hooks: {
-          pre: [
-            {
-              factory: HookType.webhook,
-              params: { success: Constants.prefixPattern + 'test.success' },
-            },
-            {
-              factory: HookType.webhook,
-              params: { success: Constants.prefixPattern + 'test.success' },
-            },
-          ],
-        },
-      },
-    } as TildaManifest;
-
-    const expectedResults = [
-      {
-        message: '',
-        factory: HookType.webhook,
-        params: { success: true },
-        signature: '',
-      },
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 2, value: 'test2', test: { success: true } },
-        },
-        success: true,
-      },
-    ];
-
-    const newPreHooksResults = manifestService.processPreHooksResultsSuccess(
-      preHooksResults,
-      manifest,
-    );
-
-    expect(newPreHooksResults).toEqual(expectedResults);
   });
 
   describe('Encryption Functions', () => {
