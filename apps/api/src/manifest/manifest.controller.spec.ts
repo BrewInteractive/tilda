@@ -309,7 +309,7 @@ describe('ManifestController', () => {
     );
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      validationResult: { success: true },
+      validationResult: { success: false },
       hook: { pre: preHookResultWithSuccess },
     });
   });
@@ -413,7 +413,7 @@ describe('ManifestController', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
-      validationResult: { success: true },
+      validationResult: { success: false },
       hook: { pre: preHookResult },
     });
   });

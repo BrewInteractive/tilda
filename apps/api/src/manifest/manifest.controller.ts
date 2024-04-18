@@ -149,9 +149,12 @@ export class ManifestController {
         preHooksResults &&
         preHooksResults.filter((hook) => !hook.success).length > 0
       ) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ validationResult, hook: { pre: preHooksResults } });
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          validationResult: {
+            success: false,
+          },
+          hook: { pre: preHooksResults },
+        });
       }
 
       manifestWithPreSignatures.data.hooks.post
