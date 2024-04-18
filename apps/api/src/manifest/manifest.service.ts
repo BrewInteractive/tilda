@@ -47,7 +47,7 @@ export class ManifestService {
   ): Promise<PreHookResponse[]> {
     const preHookResult: PreHookResponse[] = [];
     for (const hook of hooks) {
-      const { signature, factory, params } = hook;
+      const { signature, factory, params, id } = hook;
 
       let isHashValid = false;
       if (signature !== undefined && signature !== null && signature !== '') {
@@ -60,12 +60,14 @@ export class ManifestService {
           .execute(params);
         const newSignature = generateHmac({ factory, params }, secretKey);
         preHookResult.push({
+          id,
           signature: newSignature,
           success: result?.success,
           ...result,
         });
       } else {
         preHookResult.push({
+          id,
           success: false,
           message:
             'The pre-hook request was not sent because the signatures are the same',

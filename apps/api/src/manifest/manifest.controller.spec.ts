@@ -215,6 +215,7 @@ describe('ManifestController', () => {
           headers: { 'content-type': 'application/json' },
         },
         success: true,
+        id: faker.string.uuid(),
       } as PreHookResponse,
     ];
     jest
@@ -271,6 +272,7 @@ describe('ManifestController', () => {
           status: 200,
           headers: { 'content-type': 'application/json' },
         },
+        id: faker.string.uuid(),
         success: false,
       },
     ];
@@ -327,6 +329,7 @@ describe('ManifestController', () => {
           status: 200,
           headers: { 'content-type': 'application/json' },
         },
+        id: faker.string.uuid(),
         success: true,
       },
     ];
@@ -383,6 +386,7 @@ describe('ManifestController', () => {
           status: 400,
           headers: { 'content-type': 'application/json' },
         },
+        id: faker.string.uuid(),
         success: false,
       } as PreHookResponse,
     ];

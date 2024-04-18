@@ -1,8 +1,8 @@
+import { Constants, Hook, HookType } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { EmailProcessor } from '../hook/processors/email.processor';
 import { EmailRequest } from '../hook/models';
-import { Constants, Hook, HookType } from '../models';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
 import { MockFactory } from 'mockingbird';
@@ -52,6 +52,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
+          id: faker.string.uuid(),
           factory: HookType.email,
           params: {
             recipients: [
@@ -79,6 +80,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
+          id: faker.string.uuid(),
           factory: HookType.email,
           params: {
             recipients: [
@@ -112,6 +114,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
+          id: faker.string.uuid(),
           factory: HookType.webhook,
           params: {
             ...webHookParams,
@@ -135,6 +138,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
+          id: faker.string.uuid(),
           factory: 'wrong-factory',
           params: {},
         },

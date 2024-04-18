@@ -16,6 +16,9 @@ class EmailRequestFixture {
 }
 
 export class WebHookFixture implements Hook {
+  @Mock(faker.string.uuid)
+  id: string;
+
   @Mock(() => HookType.webhook)
   factory: HookType;
 
@@ -24,6 +27,9 @@ export class WebHookFixture implements Hook {
 }
 
 export class EmailHookFixture implements Hook {
+  @Mock(faker.string.uuid)
+  id: string;
+
   @Mock(() => HookType.email)
   factory: HookType;
 
