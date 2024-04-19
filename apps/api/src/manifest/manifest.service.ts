@@ -215,6 +215,7 @@ export class ManifestService {
   };
 
   validateManifest = (manifest: TildaManifest): boolean => {
+    if (!manifest.data) return false;
     const validate = this.ajv.compile(TildaManifestSchema);
 
     const isValid = validate(manifest);
