@@ -299,9 +299,10 @@ export class ManifestService {
     const transformHookParamsValues = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
         if (
-          hook.factory === HookType.webhook &&
-          hook.params &&
-          (hook.params as WebhookParams).values
+          hook.factory === HookType.datacord ||
+          (hook.factory === HookType.webhook &&
+            hook.params &&
+            (hook.params as WebhookParams).values)
         ) {
           (hook.params as WebhookParams).values = this.transformPatternValues(
             (hook.params as WebhookParams).values,

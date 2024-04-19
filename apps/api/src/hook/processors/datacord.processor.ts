@@ -6,15 +6,13 @@ import {
 } from '../models';
 import axios, { AxiosResponse } from 'axios';
 
-import { ConfigService } from '@nestjs/config';
 import { HookInterface } from '../models/hook.interface';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class DataCordProcessor implements HookInterface {
-  constructor(private readonly configService: ConfigService) {}
   async execute(params: DataCordParams): Promise<HookResponse> {
-    const tokenResult = await this.getToken();
+    const tokenResult = await this.getToken(params);
 
     if (tokenResult.status !== 200) {
       return {
@@ -31,7 +29,7 @@ export class DataCordProcessor implements HookInterface {
 
     const postData = new URLSearchParams({
       LanguageCode: 'tr',
-      Guid: this.configService.get('DATACORD.GUID'),
+      Guid: params.values.datacordGuid,
       Name: params.values.name,
       Surname: params.values.surname,
       PhoneNumber: params.values.phoneNumber,
@@ -41,9 +39,7 @@ export class DataCordProcessor implements HookInterface {
 
     const result = await axios({
       method: 'POST',
-      url: `${this.configService.get(
-        'DATACORD.URL',
-      )}/api/Tani/GetAuthenticationForms`,
+      url: `${params.url}/api/Tani/GetAuthenticationForms`,
       data: postData.toString(),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -61,17 +57,17 @@ export class DataCordProcessor implements HookInterface {
     } as DataCordResponse;
   }
 
-  private async getToken(): Promise<AxiosResponse<any, any>> {
+  private async getToken(
+    params: DataCordParams,
+  ): Promise<AxiosResponse<any, any>> {
     const postData = new URLSearchParams({
-      Username: this.configService.get('DATACORD.USER'),
-      Password: this.configService.get('DATACORD.PASSWORD'),
+      Username: params.values.datacordUsername,
+      Password: params.values.datacordPassword,
     });
 
     const result = await axios({
       method: 'POST',
-      url: `${this.configService.get(
-        'DATACORD.URL',
-      )}/api/Tani/AccountConfirmation`,
+      url: `${params.url}/api/Tani/AccountConfirmation`,
       data: postData.toString(),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

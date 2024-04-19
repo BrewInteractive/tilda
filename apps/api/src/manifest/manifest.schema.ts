@@ -60,7 +60,7 @@ const TildaManifestSchema = {
                 properties: {
                   factory: {
                     type: 'string',
-                    enum: ['webhook'],
+                    enum: ['webhook', 'datacord'],
                   },
                   params: {
                     type: 'object',
@@ -88,7 +88,23 @@ const TildaManifestSchema = {
                         },
                       },
                     },
-                    required: ['url', 'method'],
+                    if: {
+                      properties: { factory: { const: 'webhook' } },
+                    },
+                    then: {
+                      properties: {
+                        params: {
+                          required: ['url', 'method'],
+                        },
+                      },
+                    },
+                    else: {
+                      properties: {
+                        params: {
+                          required: ['url', 'values'],
+                        },
+                      },
+                    },
                   },
                 },
                 required: ['factory', 'params'],
