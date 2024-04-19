@@ -172,6 +172,7 @@ const TildaManifestSchema = {
       required: ['fields', 'hooks'],
     },
   },
+  required: ['data'],
 };
 
 export default TildaManifestSchema;
