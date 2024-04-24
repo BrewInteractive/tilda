@@ -12,4 +12,5 @@ export class PreHookResponse {
   message?: string;
   factory?: HookType;
   params?: any;
+  ignoreSuccess: boolean;
 }

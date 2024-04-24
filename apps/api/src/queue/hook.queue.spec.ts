@@ -61,6 +61,7 @@ describe('HookQueue', () => {
               },
             ],
           } as EmailRequest,
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };
@@ -94,6 +95,7 @@ describe('HookQueue', () => {
               surname: faker.person.lastName(),
             },
           },
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };
@@ -119,6 +121,7 @@ describe('HookQueue', () => {
           params: {
             ...webHookParams,
           },
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };

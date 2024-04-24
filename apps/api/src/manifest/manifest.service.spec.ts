@@ -277,7 +277,9 @@ describe('ManifestService', () => {
 
     const result = await manifestService.handlePreHooks(hooks, secretKey);
 
-    expect(result).toEqual([{ signature: mockHmacValue, ...mockResponse }]);
+    expect(result).toEqual([
+      { signature: mockHmacValue, ignoreSuccess: false, ...mockResponse },
+    ]);
     expect(hookProcessorFactory.getProcessor).toHaveBeenCalledWith(
       hooks[0].factory,
     );
