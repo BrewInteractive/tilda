@@ -22,10 +22,4 @@ export default () => ({
       : [],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   },
-  DATACORD: {
-    PASSWORD: process.env.DATACORD_PASSWORD,
-    USER: process.env.DATACORD_USER,
-    URL: process.env.DATACORD_URL,
-    GUID: process.env.DATACORD_GUID,
-  },
 });
