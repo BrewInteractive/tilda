@@ -298,6 +298,7 @@ export class ManifestService {
 
     const transformHookParamsValues = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
+        //TODO: it should not be necessary to check with the factory type. So new hook types should work without a change here.
         if (
           hook.factory === HookType.datacord ||
           (hook.factory === HookType.webhook &&
