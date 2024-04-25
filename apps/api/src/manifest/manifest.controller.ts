@@ -149,9 +149,9 @@ export class ManifestController {
         this.secretKey,
       );
 
-      const hasFailedPreHooks =
-        preHooksResults &&
-        preHooksResults.some((hook) => !hook.success && !hook.ignoreSuccess);
+      const hasFailedPreHooks = preHooksResults?.some(
+        (hook) => !hook.success && !hook.ignoreSuccess,
+      );
 
       if (preHooksResults && hasFailedPreHooks) {
         return res.status(HttpStatus.BAD_REQUEST).json({
