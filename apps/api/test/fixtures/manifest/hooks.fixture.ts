@@ -24,6 +24,9 @@ export class WebHookFixture implements Hook {
 
   @Mock(WebHookRequestFixture)
   params: WebHookRequestFixture;
+
+  @Mock(() => false)
+  ignoreSuccess: boolean;
 }
 
 export class EmailHookFixture implements Hook {
@@ -35,4 +38,7 @@ export class EmailHookFixture implements Hook {
 
   @Mock(EmailRequestFixture)
   params: EmailRequestFixture;
+
+  @Mock(() => false)
+  ignoreSuccess: boolean;
 }

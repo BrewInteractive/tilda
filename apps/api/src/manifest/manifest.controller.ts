@@ -132,23 +132,28 @@ export class ManifestController {
       }
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+
       const dataWithUi = this.manifestService.getDataWithUiLabels(
         manifestResponse,
         payload,
       );
+
       const manifestWithPreSignatures =
         this.manifestService.addSignatureToPreHooks(
           manifestResponse,
           prehookSignaturesArray,
         );
+
       const preHooksResults = await this.manifestService.handlePreHooks(
         manifestWithPreSignatures.data.hooks.pre,
         this.secretKey,
       );
-      if (
-        preHooksResults &&
-        preHooksResults.filter((hook) => !hook.success).length > 0
-      ) {
+
+      const hasFailedPreHooks = preHooksResults?.some(
+        (hook) => !hook.success && !hook.ignoreSuccess,
+      );
+
+      if (preHooksResults && hasFailedPreHooks) {
         return res.status(HttpStatus.BAD_REQUEST).json({
           validationResult: {
             success: false,
@@ -167,9 +172,12 @@ export class ManifestController {
         manifestWithPreSignatures.data.hooks.post,
       );
 
-      return res
-        .status(HttpStatus.OK)
-        .json({ validationResult, hook: { pre: preHooksResults } });
+      return res.status(HttpStatus.OK).json({
+        validationResult: {
+          success: true,
+        },
+        hook: { pre: preHooksResults },
+      });
     } catch (error) {
       if (error instanceof HmacError) {
         return res

@@ -5,4 +5,5 @@ export interface Hook {
   id: string;
   factory: HookType;
   params: HookParams;
+  ignoreSuccess: boolean;
 }
