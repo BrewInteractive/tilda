@@ -26,7 +26,7 @@ jobs:
 
       - name: Get version from release tag
         id: extract_version
-        run: echo "${{ github.event.release.tag_name }}" | cut -c 2-
+        run: echo ::set-output name=version::$(echo "${{ github.event.release.tag_name }}" | cut -d 'v' -f 2)
   
       - name: Build and push
         uses: docker/build-push-action@v3
