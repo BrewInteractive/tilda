@@ -2,7 +2,6 @@
 
 To customize the service, review the [environment variables](https://github.com/BrewInteractive/tilda/blob/main/docs/environment_variables.md) document.
 
-
 ## Deploying With Docker Compose
 
 It is possible to deploy the server by pulling the docker image on the Docker Hub.

@@ -1,6 +1,6 @@
 {
   "name": "tilda",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
   "author": "",
   "private": true,
@@ -17,7 +17,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/api/test/jest-e2e.json --forceExit --detectOpenHandles"
+    "test:e2e": "jest --config ./apps/api/test/jest-e2e.json --forceExit --detectOpenHandles",
+    "release": "standard-version"
   },
   "dependencies": {
     "@bull-board/api": "^5.13.0",
@@ -36,7 +37,8 @@
     "mockingbird": "^2.1.2",
     "nodemailer": "^6.9.8",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "standard-version": "^9.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
