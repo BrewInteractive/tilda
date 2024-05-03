@@ -1,10 +1,17 @@
 export default () => ({
   ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
   SWAGGER_ENABLED: process.env.SWAGGER_ENABLED === 'true' || false,
-  BULL_HOST: process.env.BULL_HOST,
-  BULL_PORT: process.env.BULL_PORT,
-  BULL_PASSWORD: process.env.BULL_PASSWORD,
-  BULL_USERNAME: process.env.BULL_USERNAME,
+  REDIS: {
+    HOST: process.env.REDIS_HOST,
+    PORT: process.env.REDIS_PORT,
+    PASSWORD: process.env.REDIS_PASSWORD,
+    USERNAME: process.env.REDIS_USERNAME,
+    TLS: {
+      ENABLE: process.env.REDIS_ENABLE_TLS === 'true' || false,
+      REJECT_UNAUTHORIZED:
+        process.env.REDIS_REJECT_UNAUTHORIZED === 'true' || false,
+    },
+  },
   SMTP: {
     HOST: process.env.SMTP_HOST,
     PORT: process.env.SMTP_PORT,

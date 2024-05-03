@@ -14,17 +14,29 @@ import { Module } from '@nestjs/common';
     EmailModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        redis: {
-          host: configService.get<string>('BULL_HOST'),
-          port: configService.get<number>('BULL_PORT'),
-          password: configService.get<string>('BULL_PASSWORD'),
-          username: configService.get<string>('BULL_USERNAME'),
-          tls: {
-            rejectUnauthorized: false,
+      useFactory: (configService: ConfigService) => {
+        const bullConfig: any = {
+          redis: {
+            host: configService.get<string>('REDIS.HOST'),
+            port: configService.get<number>('REDIS.PORT'),
+            password: configService.get<string>('REDIS.PASSWORD'),
+            username: configService.get<string>('REDIS.USERNAME'),
           },
-        },
-      }),
+        };
+
+        const enableTLS = configService.get<boolean>('REDIS.TLS.ENABLE');
+        const rejectUnauthorized = configService.get<boolean>(
+          'REDIS.TLS.REJECT_UNAUTHORIZED',
+        );
+
+        if (enableTLS) {
+          bullConfig.redis.tls = {
+            rejectUnauthorized: rejectUnauthorized,
+          };
+        }
+
+        return bullConfig;
+      },
       inject: [ConfigService],
     }),
     BullBoardModule.forRoot({
