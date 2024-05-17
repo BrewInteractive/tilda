@@ -15,7 +15,7 @@ import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 import Ajv from 'ajv';
 import { AxiosResponse } from 'axios';
 import { EmailProcessor } from '../hook/processors/email.processor';
-import { HookProcessorFactory } from './../hook/hook.factory';
+import { HookFactory } from './../hook/hook.factory';
 import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
@@ -36,7 +36,7 @@ describe('ManifestService', () => {
     'd01858dd2f86ab1d3a7c4a152e6b3755a9eff744999b3a07c17fb9cbb363154e';
   let manifestService: ManifestService;
   let httpService: HttpService;
-  let hookProcessorFactory: HookProcessorFactory;
+  let hookProcessorFactory: HookFactory;
   let webHookProcessor: WebhookProcessor;
   const queueMock = { add: jest.fn() };
 
@@ -56,7 +56,7 @@ describe('ManifestService', () => {
           },
         },
         {
-          provide: HookProcessorFactory,
+          provide: HookFactory,
           useValue: {
             getProcessor: jest.fn(),
           },
@@ -83,7 +83,7 @@ describe('ManifestService', () => {
     manifestService = module.get<ManifestService>(ManifestService);
     httpService = module.get<HttpService>(HttpService);
     hookProcessorFactory =
-      module.get<HookProcessorFactory>(HookProcessorFactory);
+      module.get<HookFactory>(HookFactory);
     webHookProcessor = module.get<WebhookProcessor>(WebhookProcessor);
   });
 

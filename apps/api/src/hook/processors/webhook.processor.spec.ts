@@ -25,7 +25,9 @@ describe('WebHookProcessor', () => {
     const mockResponse = {
       data: faker.string.alpha(),
       status: 200,
-      headers: ['content-type: application/json'],
+      headers: {
+        'content-type': 'application/json',
+      },
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
     const webHookRequest = MockFactory(WebHookRequestFixture).one();
@@ -93,7 +95,9 @@ describe('WebHookProcessor', () => {
         },
       },
       status: 200,
-      headers: ['content-type: application/json'],
+      headers: {
+        'content-type': 'application/json',
+      },
     };
     mockAxios.mockResolvedValueOnce(mockResponse);
 
@@ -126,7 +130,9 @@ describe('WebHookProcessor', () => {
     const webHookRequest = {
       url: 'http://example.com/api/data',
       method: WebhookHttpMethod.GET,
-      headers: ['Accept: application/json'],
+      headers: {
+        'content-type': 'application/json',
+      },
       values: {},
       success_path:
         Constants.prefixPattern + 'someProperty.anotherProperty.targetProperty',
