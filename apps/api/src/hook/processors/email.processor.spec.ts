@@ -53,7 +53,7 @@ describe('EmailProcessor', () => {
       success: true,
       message: 'Email sent successfully',
     });
-    expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
+    expect(configService.get).toHaveBeenCalledWith('EMAIL_FROM');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
     const expectedEmail = {
@@ -90,7 +90,7 @@ describe('EmailProcessor', () => {
       success: true,
       message: 'Email sent successfully',
     });
-    expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
+    expect(configService.get).toHaveBeenCalledWith('EMAIL_FROM');
     expect(sendEmailSpy).toHaveBeenCalledTimes(2);
 
     const expectedEmail = {
@@ -122,7 +122,7 @@ describe('EmailProcessor', () => {
       message: 'Email sent successfully',
     });
 
-    expect(configService.get).toHaveBeenCalledWith('SMTP.AUTH.USER');
+    expect(configService.get).toHaveBeenCalledWith('EMAIL_FROM');
     expect(sendEmailSpy).toHaveBeenCalledTimes(1);
   });
 });
