@@ -21,6 +21,7 @@ export default () => ({
       PASS: process.env.SMTP_AUTH_PASS,
     },
   },
+  EMAIL_FROM: process.env.EMAIL_FROM,
   EMAIL_SERVICE: process.env.EMAIL_SERVICE,
   API_KEY: process.env.API_KEY,
   CORS_CONFIG: {

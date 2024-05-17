@@ -29,7 +29,7 @@ export class EmailProcessor implements HookInterface {
         const htmlContent = this.generateHtmlContent(params.dataWithUi);
 
         const email = {
-          from: this.configService.get('SMTP.AUTH.USER'),
+          from: this.configService.get('EMAIL_FROM'),
           to: recipientEmail,
           subject: 'Tilda Run For Validation Result',
           html: htmlContent,
