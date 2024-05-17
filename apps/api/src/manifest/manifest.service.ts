@@ -25,6 +25,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { PreHookResponse, ManifestRequest } from './models';
+import { DataCordParams } from '../hook/models';
 
 @Injectable()
 export class ManifestService {
@@ -227,36 +228,39 @@ export class ManifestService {
     return isValid;
   };
 
-  generateWebhookKeyValues = (
+  generateHookTemplateKeyPairs = (
     manifest: TildaManifest,
     payload: { [key: string]: string },
   ): { [key: string]: string } => {
-    const output = { ...payload };
+    //merge payload and const values of fields
+    const combinedPayload = { ...payload };
 
     for (const fieldKey in manifest.data.fields) {
       if (manifest.data.fields.hasOwnProperty(fieldKey)) {
         const field = manifest.data.fields[fieldKey];
         const fieldName = field.inputName || fieldKey;
 
+        //if field has input name override the key with input name
         if (field.inputName) {
-          output[field.inputName] =
+          combinedPayload[field.inputName] =
             payload[field.inputName] || payload[fieldKey];
-          if (!output[fieldKey]) output[fieldKey] = payload[field.inputName];
+          if (!combinedPayload[fieldKey])
+            combinedPayload[fieldKey] = payload[field.inputName];
         }
 
         for (const constKey in field.const) {
           const constValue = field.const[constKey];
-          output[`${fieldName}.const.${constKey}`] = constValue;
-          output[`${fieldKey}.const.${constKey}`] = constValue;
+          combinedPayload[`${fieldName}.const.${constKey}`] = constValue;
+          combinedPayload[`${fieldKey}.const.${constKey}`] = constValue;
         }
       }
     }
 
-    return output;
+    return combinedPayload;
   };
 
-  transformPatternValues = (
-    values: WebhookParams['values'],
+  transformTemplateValues = (
+    values: { [key: string]: string },
     output: { [key: string]: string },
   ): { [key: string]: string } => {
     const transformedValues: { [key: string]: string } = {};
@@ -292,31 +296,39 @@ export class ManifestService {
     return transformedValues;
   };
 
-  setWebhookParamsValues = (
+  applyTemplateToHooks = (
     manifest: TildaManifest,
     payload: { [key: string]: string },
   ): void => {
-    const output = this.generateWebhookKeyValues(manifest, payload);
+    const templateValues = this.generateHookTemplateKeyPairs(manifest, payload);
 
-    const transformHookParamsValues = (hooks: Hook[]): void => {
+    const updateHookParameters = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
-        //TODO: it should not be necessary to check with the factory type. So new hook types should work without a change here.
-        if (
-          hook.factory === HookType.datacord ||
-          (hook.factory === HookType.webhook &&
-            hook.params &&
-            (hook.params as WebhookParams).values)
-        ) {
-          (hook.params as WebhookParams).values = this.transformPatternValues(
-            (hook.params as WebhookParams).values,
-            output,
+        if (hook.factory === HookType.datacord) {
+          const params = hook.params as DataCordParams;
+          params.values = this.transformTemplateValues(
+            params.values,
+            templateValues,
+          );
+        }
+        if (hook.factory === HookType.webhook) {
+          const params = hook.params as WebhookParams;
+          params.values = this.transformTemplateValues(
+            params.values,
+            templateValues,
+          );
+          params.headers = this.transformTemplateValues(
+            params.headers,
+            templateValues,
           );
         }
       });
     };
 
-    transformHookParamsValues(manifest.data.hooks.pre);
-    transformHookParamsValues(manifest.data.hooks.post);
+    updateHookParameters([
+      ...manifest.data.hooks.pre,
+      ...manifest.data.hooks.post,
+    ]);
   };
 
   getDataWithUiLabels = (

@@ -131,7 +131,7 @@ export class ManifestController {
         throw new InvalidValidationError(validationResult);
       }
 
-      this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+      this.manifestService.applyTemplateToHooks(manifestResponse, payload);
 
       const dataWithUi = this.manifestService.getDataWithUiLabels(
         manifestResponse,
