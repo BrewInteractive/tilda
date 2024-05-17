@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { EmailProcessor } from '../hook/processors/email.processor';
 import { EmailRequest } from '../hook/models';
-import { HookProcessorFactory } from '../hook/hook.factory';
+import { HookFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
 import { MockFactory } from 'mockingbird';
 import { WebHookRequestFixture } from '../../test/fixtures';
@@ -12,7 +12,7 @@ import { faker } from '@faker-js/faker';
 
 describe('HookQueue', () => {
   let hookQueue: HookQueue;
-  let hookProcessorFactoryMock: HookProcessorFactory;
+  let hookProcessorFactoryMock: HookFactory;
   let emailProcessorMock: EmailProcessor;
   let webHookProcessorMock: WebhookProcessor;
 
@@ -21,7 +21,7 @@ describe('HookQueue', () => {
       providers: [
         HookQueue,
         {
-          provide: HookProcessorFactory,
+          provide: HookFactory,
           useValue: {
             getProcessor: jest.fn(),
           },
@@ -43,7 +43,7 @@ describe('HookQueue', () => {
 
     hookQueue = module.get<HookQueue>(HookQueue);
     hookProcessorFactoryMock =
-      module.get<HookProcessorFactory>(HookProcessorFactory);
+      module.get<HookFactory>(HookFactory);
     emailProcessorMock = module.get<EmailProcessor>(EmailProcessor);
     webHookProcessorMock = module.get<WebhookProcessor>(WebhookProcessor);
   });

@@ -6,11 +6,11 @@ import {
 } from '@nestjs/bull';
 
 import { Hook } from '../models';
-import { HookProcessorFactory } from '../hook/hook.factory';
+import { HookFactory } from '../hook/hook.factory';
 
 @Processor('hook-queue')
 export class HookQueue {
-  constructor(private readonly hookFactory: HookProcessorFactory) {}
+  constructor(private readonly hookFactory: HookFactory) {}
 
   @OnQueueError()
   OnQueueError(err: Error) {

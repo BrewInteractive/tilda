@@ -10,7 +10,6 @@ import {
   Hook,
   HookType,
   TildaManifest,
-  WebhookParams,
 } from '../models';
 import { GetManifestError } from './errors/manifest.error';
 import {
@@ -23,9 +22,8 @@ import TildaManifestSchema from './manifest.schema';
 import Ajv from 'ajv';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { HookProcessorFactory } from '../hook/hook.factory';
+import { HookFactory } from '../hook/hook.factory';
 import { PreHookResponse, ManifestRequest } from './models';
-import { DataCordParams } from '../hook/models';
 
 @Injectable()
 export class ManifestService {
@@ -34,7 +32,7 @@ export class ManifestService {
     @Inject('Ajv')
     private readonly ajv: Ajv,
     @InjectQueue('hook-queue') private readonly hookQueue: Queue,
-    private readonly hookFactory: HookProcessorFactory,
+    private readonly hookFactory: HookFactory,
   ) {}
 
   async handlePostHooks(hooks: Hook[]): Promise<void> {
@@ -259,43 +257,6 @@ export class ManifestService {
     return combinedPayload;
   };
 
-  transformTemplateValues = (
-    values: { [key: string]: string },
-    output: { [key: string]: string },
-  ): { [key: string]: string } => {
-    const transformedValues: { [key: string]: string } = {};
-    const valuesCopy = JSON.parse(JSON.stringify(values)) as {
-      [key: string]: string;
-    };
-    const regexPattern = `\\{(?:\\${Constants.prefixPattern})?fields\\.([^}]+)\\}`;
-    const fieldPlaceholderPattern = new RegExp(regexPattern);
-    const globalFieldPlaceholderPattern = new RegExp(regexPattern, 'g');
-
-    Object.entries(valuesCopy).forEach(([key, value]) => {
-      const originalValue = value;
-      const matches = originalValue.match(globalFieldPlaceholderPattern);
-
-      if (matches) {
-        let transformedValue = originalValue;
-        matches.forEach((match) => {
-          const fieldPattern = fieldPlaceholderPattern;
-          const field = match
-            .replace(fieldPattern, '$1')
-            .replace('.value', '')
-            .replace(Constants.encryptSuffix, '');
-          transformedValue = transformedValue.replace(
-            match,
-            output[field] || output[field + Constants.encryptSuffix] || '',
-          );
-        });
-        transformedValues[key] = transformedValue;
-      } else {
-        transformedValues[key] = value;
-      }
-    });
-    return transformedValues;
-  };
-
   applyTemplateToHooks = (
     manifest: TildaManifest,
     payload: { [key: string]: string },
@@ -304,24 +265,9 @@ export class ManifestService {
 
     const updateHookParameters = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
-        if (hook.factory === HookType.datacord) {
-          const params = hook.params as DataCordParams;
-          params.values = this.transformTemplateValues(
-            params.values,
-            templateValues,
-          );
-        }
-        if (hook.factory === HookType.webhook) {
-          const params = hook.params as WebhookParams;
-          params.values = this.transformTemplateValues(
-            params.values,
-            templateValues,
-          );
-          params.headers = this.transformTemplateValues(
-            params.headers,
-            templateValues,
-          );
-        }
+        this.hookFactory
+          .getTemplating(hook.factory)
+          .applyTemplate(hook.params, templateValues);
       });
     };
 

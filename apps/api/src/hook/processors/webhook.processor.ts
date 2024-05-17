@@ -16,21 +16,7 @@ export class WebhookProcessor implements HookInterface {
 
   async sendWebhookAsync(params: WebhookParams): Promise<WebHookResponse> {
     try {
-      const {
-        url,
-        headers: headerStrings,
-        method,
-        values,
-        success_path,
-      } = params;
-      const headers = {};
-
-      for (const header of headerStrings) {
-        const index = header.indexOf(':');
-        const key = header.substring(0, index).trim();
-        const value = header.substring(index + 1).trim();
-        headers[key] = value;
-      }
+      const { url, headers, method, values, success_path } = params;
 
       const requestData = {};
       for (const key in values) {

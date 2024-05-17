@@ -7,7 +7,7 @@ import Ajv from 'ajv';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 import { EmailProcessor } from '../hook/processors/email.processor';
-import { HookProcessorFactory } from '../hook/hook.factory';
+import { HookFactory } from '../hook/hook.factory';
 import { HttpService } from '@nestjs/axios';
 import { HttpStatus } from '@nestjs/common';
 import { ManifestController } from './manifest.controller';
@@ -94,7 +94,7 @@ describe('ManifestController', () => {
         ManifestService,
         { provide: 'Ajv', useValue: new Ajv({ allErrors: true }) },
         {
-          provide: HookProcessorFactory,
+          provide: HookFactory,
           useValue: {
             getProcessor: jest.fn(),
           },

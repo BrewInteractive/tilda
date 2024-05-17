@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { DataCordProcessor } from './processors/datacord.processor';
 import { EmailProcessor } from './processors/email.processor';
-import { HookProcessorFactory } from './hook.factory';
+import { HookFactory } from './hook.factory';
 import { HookType } from '../models';
 import { HttpService } from '@nestjs/axios';
 import { ModuleRef } from '@nestjs/core';
@@ -13,7 +13,7 @@ import { faker } from '@faker-js/faker';
 
 describe('HookProcessorFactory', () => {
   let moduleRef: ModuleRef;
-  let factory: HookProcessorFactory;
+  let factory: HookFactory;
   let emailProcessor: EmailProcessor;
   let dataCordProcessor: DataCordProcessor;
   let webhookProcessor: WebhookProcessor;
@@ -48,7 +48,7 @@ describe('HookProcessorFactory', () => {
           useValue: {},
         },
         {
-          provide: HookProcessorFactory,
+          provide: HookFactory,
           useValue: {
             getProcessor: jest.fn(),
           },
@@ -84,7 +84,7 @@ describe('HookProcessorFactory', () => {
     emailProcessor = module.get<EmailProcessor>(EmailProcessor);
     webhookProcessor = module.get<WebhookProcessor>(WebhookProcessor);
     dataCordProcessor = module.get<DataCordProcessor>(DataCordProcessor);
-    factory = new HookProcessorFactory(moduleRef);
+    factory = new HookFactory(moduleRef);
   });
 
   it('should return an instance of EmailProcessor for HookType.email', () => {
