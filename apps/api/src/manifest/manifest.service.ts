@@ -105,11 +105,15 @@ export class ManifestService {
     ) {
       throw new GetManifestError(`One of url or base64 should be provided`);
     }
-    return manifestInput.manifest
-      ? manifestInput.manifest
-      : manifestInput.base64
-        ? await this.getManifestFromBase64(manifestInput.base64)
-        : await this.getManifestFromUrl(manifestInput.url);
+    let manifest: TildaManifest | null;
+    if (manifestInput.manifest) {
+      manifest = manifestInput.manifest;
+    } else if (manifestInput.base64) {
+      manifest = await this.getManifestFromBase64(manifestInput.base64);
+    } else {
+      manifest = await this.getManifestFromUrl(manifestInput.url);
+    }
+    return manifest;
   }
 
   async getManifestFromUrl(url: string): Promise<TildaManifest> {
