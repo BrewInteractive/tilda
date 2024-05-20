@@ -6,6 +6,7 @@ import { EmailServiceType } from '../../email/enum/email.service.type.enum';
 export interface EmailParams extends HookParams {
   recipients: EmailRecipient[];
   serviceType: EmailServiceType;
+  subject?: string;
   config: EmailConfig;
   dataWithUi?: DataWithUiLabels;
 }

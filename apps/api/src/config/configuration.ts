@@ -12,6 +12,7 @@ export default () => ({
         process.env.REDIS_REJECT_UNAUTHORIZED === 'true' || false,
     },
   },
+  EMAIL_SUBJECT: process.env.EMAIL_SUBJECT,
   API_KEY: process.env.API_KEY,
   CORS_CONFIG: {
     origin: process.env.ALLOWED_ORIGINS
