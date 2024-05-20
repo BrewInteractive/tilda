@@ -8,7 +8,7 @@ import {
   WebhookParams,
 } from '../models';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
-import { EmailRequest, WebHookResponse } from '../hook/models';
+import { WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
@@ -245,7 +245,7 @@ describe('ManifestService', () => {
       name: faker.person.firstName(),
       surname: faker.person.lastName(),
     };
-    (emailHookFixture.params as EmailRequest).dataWithUi = dataWithUi;
+    (emailHookFixture.params as EmailParams).dataWithUi = dataWithUi;
     const hooks: Hook[] = [{ ...emailHookFixture }];
     await manifestService.handlePostHooks(hooks);
 

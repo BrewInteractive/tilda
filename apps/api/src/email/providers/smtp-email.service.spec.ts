@@ -27,10 +27,6 @@ describe('SmtpEmailService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SmtpEmailService,
-        {
-          provide: 'SmtpEmailConfig',
-          useValue: config,
-        },
       ],
     }).compile();
 
@@ -42,6 +38,7 @@ describe('SmtpEmailService', () => {
     const email = MockFactory(EmailFixture).one();
 
     // Act
+    emailService.setConfig(config);
     await emailService.sendEmailAsync(email);
 
     // Assert
