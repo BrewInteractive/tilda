@@ -58,7 +58,7 @@ describe('EmailProcessor', () => {
 
     const expectedEmail = {
       from: fromEmail,
-      subject: 'Tilda Run For Validation Result',
+      subject: 'tilda.run E-mail Notification',
       html: '<html><body></body></html>',
     };
 
@@ -95,7 +95,7 @@ describe('EmailProcessor', () => {
 
     const expectedEmail = {
       from: fromEmail,
-      subject: 'Tilda Run For Validation Result',
+      subject: 'tilda.run E-mail Notification',
       html: `<html><body><p>name: ${dataWithUi.name}</p><p>surname: ${dataWithUi.surname}</p></body></html>`,
     };
     expect(sendEmailSpy).toHaveBeenCalledWith(

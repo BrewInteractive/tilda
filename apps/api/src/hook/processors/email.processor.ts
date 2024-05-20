@@ -31,7 +31,7 @@ export class EmailProcessor implements HookInterface {
         const email = {
           from: this.configService.get('EMAIL_FROM'),
           to: recipientEmail,
-          subject: 'Tilda Run For Validation Result',
+          subject: 'tilda.run E-mail Notification',
           html: htmlContent,
         } as Email;
 
