@@ -12,15 +12,20 @@ export class SmtpEmailService extends EmailService {
   }
 
   setConfig(config: SmtpEmailConfig): void {
-    this.transporter = nodemailer.createTransport({
+    const smtpOptions: nodemailer.TransportOptions = {
       host: config.host,
       port: config.port,
       secure: config.secure,
-      auth: {
+    };
+
+    if (config.auth && config.auth.user && config.auth.pass) {
+      smtpOptions.auth = {
         user: config.auth.user,
         pass: config.auth.pass,
-      },
-    });
+      };
+    }
+
+    this.transporter = nodemailer.createTransport(smtpOptions);
   }
 
   async sendEmailAsync(email: Email): Promise<void> {

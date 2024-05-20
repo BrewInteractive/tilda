@@ -12,15 +12,6 @@ nodemailer.createTransport.mockReturnValue({ sendMail: sendMailMock });
 
 describe('SmtpEmailService', () => {
   let emailService: SmtpEmailService;
-  const config = {
-    host: faker.internet.url(),
-    port: faker.number.int(),
-    secure: faker.datatype.boolean(),
-    auth: {
-      user: faker.internet.email(),
-      pass: faker.internet.password(),
-    },
-  } as SmtpEmailConfig;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -34,6 +25,15 @@ describe('SmtpEmailService', () => {
   });
 
   it('should send an email successfully', async () => {
+    const config = {
+      host: faker.internet.url(),
+      port: faker.number.int(),
+      secure: faker.datatype.boolean(),
+      auth: {
+        user: faker.internet.email(),
+        pass: faker.internet.password(),
+      },
+    } as SmtpEmailConfig;
     // Arrange
     const email = MockFactory(EmailFixture).one();
 
@@ -44,5 +44,48 @@ describe('SmtpEmailService', () => {
     // Assert
     expect(sendMailMock).toHaveBeenCalledTimes(1);
     expect(sendMailMock).toHaveBeenCalledWith({ ...email });
+  });
+  it('should configure transporter with auth', () => {
+    const authLoginConfig: SmtpEmailConfig = {
+      from: faker.internet.email(),
+      host: faker.internet.url(),
+      port: 587,
+      secure: false,
+      auth: {
+        user: faker.internet.email(),
+        pass: faker.internet.password(),
+      },
+    };
+
+    const mockCreateTransport = nodemailer.createTransport as jest.Mock;
+    emailService.setConfig(authLoginConfig);
+
+    expect(mockCreateTransport).toHaveBeenCalledWith({
+      host: authLoginConfig.host,
+      port: 587,
+      secure: false,
+      auth: {
+        user: authLoginConfig.auth.user,
+        pass: authLoginConfig.auth.pass,
+      },
+    });
+  });
+
+  it('should configure transporter without auth', () => {
+    const basicLoginConfig: SmtpEmailConfig = {
+      from: faker.internet.email(),
+      host: faker.internet.url(),
+      port: 587,
+      secure: false,
+    };
+
+    const mockCreateTransport = nodemailer.createTransport as jest.Mock;
+    emailService.setConfig(basicLoginConfig);
+
+    expect(mockCreateTransport).toHaveBeenCalledWith({
+      host: basicLoginConfig.host,
+      port: 587,
+      secure: false,
+    });
   });
 });

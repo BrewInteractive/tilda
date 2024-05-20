@@ -4,8 +4,8 @@ export class SmtpEmailConfig implements EmailConfig {
   host: string;
   port: number;
   secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
+  auth?: {
+    user?: string;
+    pass?: string;
   };
 }
