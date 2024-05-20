@@ -1,23 +1,24 @@
+import * as nodemailer from 'nodemailer';
+
 import { Email } from '../dto/email.dto';
 import { EmailService } from '../email.service';
 import { SmtpEmailConfig } from './smtp-email.config';
-import { Inject } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
 
 export class SmtpEmailService extends EmailService {
   private transporter: nodemailer.Transporter;
 
-  constructor(
-    @Inject('SmtpEmailConfig') private readonly smtpConfig: SmtpEmailConfig,
-  ) {
+  constructor() {
     super();
+  }
+
+  setConfig(config: SmtpEmailConfig): void {
     this.transporter = nodemailer.createTransport({
-      host: this.smtpConfig.host,
-      port: this.smtpConfig.port,
-      secure: this.smtpConfig.secure,
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
       auth: {
-        user: this.smtpConfig.auth.user,
-        pass: this.smtpConfig.auth.pass,
+        user: config.auth.user,
+        pass: config.auth.pass,
       },
     });
   }

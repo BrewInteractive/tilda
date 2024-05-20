@@ -1,7 +1,7 @@
+import { Constants, DataWithUiLabels, EmailParams } from '../../models';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ConfigService } from '@nestjs/config';
-import { Constants } from '../../models';
 import { EmailProcessor } from './email.processor';
 import { EmailService } from '../../email/email.service';
 import { faker } from '@faker-js/faker';
@@ -45,7 +45,7 @@ describe('EmailProcessor', () => {
         { [Constants.emailSuffix]: faker.internet.email() },
         { [Constants.emailSuffix]: faker.internet.email() },
       ],
-    };
+    } as EmailParams;
 
     const actual = await emailProcessor.execute(emailRequest);
 
@@ -75,14 +75,14 @@ describe('EmailProcessor', () => {
     const dataWithUi = {
       name: faker.person.firstName(),
       surname: faker.person.lastName(),
-    };
+    } as DataWithUiLabels;
     const emailRequest = {
       recipients: [
         { [Constants.emailSuffix]: faker.internet.email() },
         { [Constants.emailSuffix]: faker.internet.email() },
       ],
       dataWithUi: dataWithUi,
-    };
+    } as EmailParams;
 
     const actual = await emailProcessor.execute(emailRequest);
 
@@ -113,7 +113,7 @@ describe('EmailProcessor', () => {
         { [Constants.emailSuffix]: faker.internet.email() },
         { [Constants.emailSuffix]: null },
       ],
-    };
+    } as EmailParams;
 
     const actual = await emailProcessor.execute(emailRequest);
 

@@ -1,4 +1,6 @@
-export class SmtpEmailConfig {
+import { EmailConfig } from './email.config';
+export class SmtpEmailConfig implements EmailConfig {
+  from: string;
   host: string;
   port: number;
   secure: boolean;
