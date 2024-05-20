@@ -18,7 +18,7 @@ export class SmtpEmailService extends EmailService {
       secure: config.secure,
     };
 
-    if (config.auth && config.auth.user && config.auth.pass) {
+    if (config.auth?.user && config.auth?.pass) {
       smtpOptions.auth = {
         user: config.auth.user,
         pass: config.auth.pass,
