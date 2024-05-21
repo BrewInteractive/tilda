@@ -55,7 +55,7 @@ export class EmailProcessor implements HookInterface {
         const htmlContent = this.generateHtmlContent(params.dataWithUi);
 
         const email = {
-          from: params.config.from,
+          from: params.config.from || params.config['from:enc'],
           to: recipientEmail,
           subject: params.subject || this.configService.get<string>('EMAIL_SUBJECT'),
           html: htmlContent,

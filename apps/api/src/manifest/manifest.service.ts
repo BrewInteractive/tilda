@@ -25,6 +25,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { PreHookResponse, ManifestRequest } from './models';
+import { EmailConfig } from '../email/providers/email.config';
 
 @Injectable()
 export class ManifestService {
@@ -163,6 +164,14 @@ export class ManifestService {
       }
     });
   };
+  encryptSmtpConfigValues = (field: EmailConfig, secret: string): void => {
+    Object.keys(field).forEach((configKey: string) => {
+      const configValue = field[configKey];
+      if (configKey.endsWith(Constants.encryptSuffix)) {
+        field[configKey] = encrypt(configValue, secret);
+      }
+    });
+  };
 
   encryptManifestEncFields = (
     manifest: TildaManifest,
@@ -172,6 +181,7 @@ export class ManifestService {
       if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.encryptManifestEmailRecipients(emailParams.recipients, secret);
+        this.encryptSmtpConfigValues((hook.params as EmailParams).config, secret);
       }
     });
 
@@ -202,6 +212,7 @@ export class ManifestService {
       if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.decryptManifestEmailRecipients(emailParams.recipients, secret);
+        this.decryptSmtpConfigValues((hook.params as EmailParams).config, secret);
       }
     });
 
@@ -220,6 +231,14 @@ export class ManifestService {
     });
   };
 
+  decryptSmtpConfigValues = (field: EmailConfig, secret: string): void => {
+    Object.keys(field).forEach((configKey: string) => {
+      const configValue = field[configKey];
+      if (configKey.endsWith(Constants.encryptSuffix)) {
+        field[configKey] = decrypt(configValue, secret);
+      }
+    });
+  };
   validateManifest = (manifest: TildaManifest): boolean => {
     const validate = this.ajv.compile(TildaManifestSchema);
 

@@ -29,10 +29,8 @@ describe('SmtpEmailService', () => {
       host: faker.internet.url(),
       port: faker.number.int(),
       secure: faker.datatype.boolean(),
-      auth: {
-        user: faker.internet.email(),
-        pass: faker.internet.password(),
-      },
+      user: faker.internet.email(),
+      pass: faker.internet.password(),
     } as SmtpEmailConfig;
     // Arrange
     const email = MockFactory(EmailFixture).one();
@@ -51,10 +49,8 @@ describe('SmtpEmailService', () => {
       host: faker.internet.url(),
       port: 587,
       secure: false,
-      auth: {
-        user: faker.internet.email(),
-        pass: faker.internet.password(),
-      },
+      user: faker.internet.email(),
+      pass: faker.internet.password(),
     };
 
     const mockCreateTransport = nodemailer.createTransport as jest.Mock;
@@ -65,8 +61,31 @@ describe('SmtpEmailService', () => {
       port: 587,
       secure: false,
       auth: {
-        user: authLoginConfig.auth.user,
-        pass: authLoginConfig.auth.pass,
+        user: authLoginConfig.user,
+        pass: authLoginConfig.pass,
+      },
+    });
+  });
+  it('should configure transporter with encrypted auth', () => {
+    const authLoginConfig: SmtpEmailConfig = {
+      from: faker.internet.email(),
+      host: faker.internet.url(),
+      port: 587,
+      secure: false,
+      "user:enc": faker.internet.email(),
+      "pass:enc": faker.internet.password(),
+    };
+
+    const mockCreateTransport = nodemailer.createTransport as jest.Mock;
+    emailService.setConfig(authLoginConfig);
+
+    expect(mockCreateTransport).toHaveBeenCalledWith({
+      host: authLoginConfig.host,
+      port: 587,
+      secure: false,
+      auth: {
+        user: authLoginConfig['user:enc'],
+        pass: authLoginConfig['pass:enc'],
       },
     });
   });

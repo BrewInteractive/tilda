@@ -8,6 +8,7 @@ import {
 
 import { Mock } from 'mockingbird';
 import { faker } from '@faker-js/faker';
+import { EmailServiceType } from 'apps/api/src/email/enum/email.service.type.enum';
 
 class UiFixture {
   @Mock(() => faker.lorem.word())
@@ -89,9 +90,26 @@ class EmailPostHookRecipientsFixture {
   @Mock(() => faker.internet.email())
   [Constants.emailSuffix]: string;
 }
+class EmailPostHookSmtpEmailConfigFixture {
+  @Mock(() => faker.internet.email())
+  from: string;
+  @Mock(() => faker.internet.url())
+  host: string;
+  @Mock(() => faker.number.int())
+  port: number;
+  @Mock(() => faker.datatype.boolean())
+  secure: boolean;
+  @Mock(() => faker.word.words())
+  "user:enc": string;
+  @Mock(() => faker.internet.password())
+  "pass:enc": string;
+}
 class PostHookParamsFixture {
   @Mock({ type: EmailPostHookRecipientsFixture, count: 1, required: false })
   recipients: EmailPostHookRecipientsFixture[];
+  serviceType: EmailServiceType.SMTP;
+  @Mock(EmailPostHookSmtpEmailConfigFixture)
+  config: EmailPostHookSmtpEmailConfigFixture;
 }
 class PostHookFixture {
   @Mock(() => HookType.email)

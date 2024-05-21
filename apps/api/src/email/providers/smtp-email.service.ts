@@ -13,15 +13,15 @@ export class SmtpEmailService extends EmailService {
 
   setConfig(config: SmtpEmailConfig): void {
     const smtpOptions: nodemailer.TransportOptions = {
-      host: config.host,
+      host: config.host || config['host:enc'],
       port: config.port,
       secure: config.secure,
     };
 
-    if (config.auth?.user && config.auth?.pass) {
+    if (config.user || config["user:enc"] && config.pass || config['pass:enc']) {
       smtpOptions.auth = {
-        user: config.auth.user,
-        pass: config.auth.pass,
+        user: config.user || config['user:enc'],
+        pass: config.pass || config['pass:enc'],
       };
     }
 
