@@ -1,15 +1,16 @@
-import { ValidatorFactory } from './validator-factory';
-import { ValidatorType } from '../models';
 import {
   Alpha,
-  Numeric,
   AlphaNumeric,
   Enum,
   Length,
   NotEmpty,
+  Numeric,
   Regex,
 } from './validators';
+
 import { InvalidArgumentException } from './validators/exceptions';
+import { ValidatorFactory } from './validator-factory';
+import { ValidatorType } from '../models';
 
 describe('ValidatorFactory', () => {
   let factory: ValidatorFactory;
@@ -42,7 +43,7 @@ describe('ValidatorFactory', () => {
       const alphaValidator = factory.getValidator(ValidatorType.alpha) as Alpha;
       const expectedData = {
         type: 'string',
-        pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$',
+        pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]*$',
       };
       const validator = alphaValidator.getValidator();
       expect(validator).toEqual(expectedData);

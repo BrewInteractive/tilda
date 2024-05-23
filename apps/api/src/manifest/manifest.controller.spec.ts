@@ -527,7 +527,7 @@ describe('ManifestController', () => {
     const validationResult = [
       {
         path: '#/properties/name/pattern',
-        message: 'must match pattern "^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$"',
+        message: 'must match pattern "^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]*$"',
       },
     ];
     jest.spyOn(validationService, 'validate').mockReturnValue({

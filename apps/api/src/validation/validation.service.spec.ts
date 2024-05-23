@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ValidationService } from './validation.service';
-import { faker } from '@faker-js/faker';
+
 import Ajv from 'ajv';
 import { MockFactory } from 'mockingbird';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { ValidationService } from './validation.service';
 import { ValidatorType } from '../models/fields';
+import { faker } from '@faker-js/faker';
 
 const mockValidatorFactory = {
   getValidator: jest.fn((validatorType) => {
@@ -13,7 +14,7 @@ const mockValidatorFactory = {
         return {
           getValidator: jest.fn(() => ({
             type: 'string',
-            pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$',
+            pattern: '^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]*$',
           })),
         };
       case 'regex':
