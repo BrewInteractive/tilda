@@ -1,0 +1,38 @@
+{
+  "link.title.Docs": {
+    "message": "Dokümantasyon",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Community": {
+    "message": "Topluluk",
+    "description": "The title of the footer links column with title=Community in the footer"
+  },
+  "link.title.More": {
+    "message": "Daha fazla",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.Tutorial": {
+    "message": "Eğitime başla",
+    "description": "The label of footer link with label=Tutorial linking to /docs/introduction"
+  },
+  "link.item.label.LinkedIn": {
+    "message": "LinkedIn",
+    "description": "The label of footer link with label=LinkedIn linking to https://www.linkedin.com/company/brew-interactive"
+  },
+  "link.item.label.Instagram": {
+    "message": "Instagram",
+    "description": "The label of footer link with label=Instagram linking to https://instagram.com/brew_interactive"
+  },
+  "link.item.label.X": {
+    "message": "X",
+    "description": "The label of footer link with label=X linking to https://x.com/BrewInteractive"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/BrewInteractive/tilda"
+  },
+  "copyright": {
+    "message": "Copyright © 2024 Brew Interactive.",
+    "description": "The footer copyright"
+  }
+}

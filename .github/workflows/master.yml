@@ -1,8 +1,6 @@
-name: Deploy Test
+name: Deploy API to Test
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
  
 jobs:
   sonarcloud:

@@ -1,41 +1,39 @@
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
+import Translate from '@docusaurus/Translate';
 
 type FeatureItem = {
-  title: string;
+  title: JSX.Element;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
   description: JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: <Translate>Easy to Use</Translate>,
+    Svg: require('@site/static/img/easy-to-use.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+       <Translate>Tilda was designed from the ground up to be easily installed and used, allowing you to get started quickly with managing and validating your form data.</Translate>
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: <Translate>Focus on What Matters</Translate>,
+    Svg: require('@site/static/img/focus-on-what-matters.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        <Translate>Tilda lets you focus on your form data and leave the rest to us. With Tilda, you can seamlessly validate and manage your forms, allowing you to concentrate on what really matters—your content and users.</Translate>
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: <Translate>Comprehensive Form Validation</Translate>,
+    Svg: require('@site/static/img/comprehensive-form-validation.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        <Translate>Tilda offers robust form validation, ensuring your data is accurate and secure. With support for various validators, Tilda handles everything from simple text fields to complex data types, providing a reliable solution for all your form validation needs.</Translate>
       </>
     ),
   },

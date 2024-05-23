@@ -4,10 +4,18 @@ sidebar_position: 1
 
 # Local Development
 
+:::danger[Take care]
+
 First, create your ".env" file. Then, you can follow the steps below.
 
-> [!NOTE]  
-> It is possible to connect local redis with Docker in your local environment for testing purposes. [Learn more](#redis-run-with-docker)
+:::
+
+:::tip[Redis Tips]
+
+It is possible to connect local redis with Docker in your local environment for testing purposes. [Learn more](./local-development#redis-run-with-docker)
+
+:::
+
 
 Install the npm packages for the service requirements.
 
@@ -17,14 +25,16 @@ $ npm install
 
 You can run the project with one of the following commands.
 
+**Development**
 ```bash
-# development
 $ npm run start
-
-# watch mode
+```
+**Watch mode**
+```bash
 $ npm run start:dev
-
-# production mode
+```
+**Production mode**
+```bash
 $ npm run start:prod
 ```
 
@@ -40,13 +50,15 @@ $ docker-compose up -d
 
 There are unit and integration tests within the service, which are written using NestJS's built-in testing framework. You can run the tests using the following commands.
 
+**Unit tests**
 ```bash
-# unit tests
 $ npm run test
-
-# e2e tests
+```
+**E2e tests**
+```bash
 $ npm run test:e2e
-
-# test coverage
+```
+**Test coverage**
+```bash
 $ npm run test:cov
 ```

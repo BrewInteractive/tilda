@@ -1,0 +1,26 @@
+{
+  "version.label": {
+    "message": "Sonraki",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Deploy": {
+    "message": "Dağıtım",
+    "description": "The label for category Deploy in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Deploy.link.generated-index.description": {
+    "message": "Bu bölüm, Docker Compose kullanarak Tilda'nın nasıl dağıtılacağına dair adım adım talimatlar da dahil olmak üzere yönergeler sağlar. Sorunsuz ve verimli bir dağıtım süreci sağlamak için bu talimatları takip edin.",
+    "description": "The generated-index page description for category Deploy in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Developments": {
+    "message": "Geliştirmeler",
+    "description": "The label for category Developments in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Developments.link.generated-index.description": {
+    "message": "Bu bölüm, Tilda için yerel geliştirme ortamınızı nasıl kuracağınızı ve yöneteceğinizi anlatır. Ortam değişkenlerini yapılandırma talimatlarını ve verimli geliştirme iş akışları için ipuçlarını içerir.",
+    "description": "The generated-index page description for category Developments in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Manifest Schema": {
+    "message": "Manifest Şeması",
+    "description": "The label for category Manifest Schema in sidebar tutorialSidebar"
+  }
+}
