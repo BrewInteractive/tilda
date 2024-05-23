@@ -525,7 +525,7 @@ describe('ManifestService', () => {
         .spyOn(manifestService, 'transformPatternValues')
         .mockReturnValue(transformedPatternValues);
 
-      manifestService.setWebhookParamsValues(
+      manifestService.applyTemplateToHooks(
         manifest as TildaManifest,
         payload,
       );
@@ -555,7 +555,7 @@ describe('ManifestService', () => {
           TildaManifestFixture.getConstName2Value(),
       };
 
-      const generatedKeyValues = manifestService.generateWebhookKeyValues(
+      const generatedKeyValues = manifestService.generateHookTemplateKeyPairs(
         manifest as TildaManifest,
         payload,
       );
@@ -583,7 +583,7 @@ describe('ManifestService', () => {
           TildaManifestFixture.getConstName2Value(),
       };
 
-      const generatedKeyValues = manifestService.generateWebhookKeyValues(
+      const generatedKeyValues = manifestService.generateHookTemplateKeyPairs(
         manifest as TildaManifest,
         payload,
       );
@@ -611,7 +611,7 @@ describe('ManifestService', () => {
         surnameConstEncValue: '',
       };
 
-      const transformedPatternValues = manifestService.transformPatternValues(
+      const transformedPatternValues = manifestService.transformTemplateValues(
         (manifest.data.hooks.pre[0].params as WebhookParams).values,
         webhookKeyValues,
       );
