@@ -1,27 +1,24 @@
 import { ConfigService } from '@nestjs/config';
-import { EmailProcessor } from './email.processor';
+import { DataCordProcessor } from './processors/datacord.processor';
+import { EmailProcessor } from './processors/email.processor';
 import { HookProcessorFactory } from './hook.factory';
-import { HookService } from './hook.service';
 import { HookType } from '../models';
 import { HttpService } from '@nestjs/axios';
 import { ModuleRef } from '@nestjs/core';
 import { SmtpEmailConfig } from '../email/providers/smtp-email.config';
 import { SmtpEmailService } from '../email/providers/smtp-email.service';
 import { Test } from '@nestjs/testing';
-import { WebhookProcessor } from './webhook.processor';
+import { WebhookProcessor } from './processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 describe('HookProcessorFactory', () => {
   let moduleRef: ModuleRef;
   let factory: HookProcessorFactory;
   let emailProcessor: EmailProcessor;
+  let dataCordProcessor: DataCordProcessor;
   let webhookProcessor: WebhookProcessor;
 
   beforeEach(async () => {
-    const hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const config = {
       host: faker.internet.url(),
       port: faker.number.int(),
@@ -47,10 +44,6 @@ describe('HookProcessorFactory', () => {
           useValue: config,
         },
         {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
-        {
           provide: HttpService,
           useValue: {},
         },
@@ -62,6 +55,12 @@ describe('HookProcessorFactory', () => {
         },
         {
           provide: EmailProcessor,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+        {
+          provide: DataCordProcessor,
           useValue: {
             execute: jest.fn(),
           },
@@ -84,6 +83,7 @@ describe('HookProcessorFactory', () => {
     moduleRef = module.get<ModuleRef>(ModuleRef);
     emailProcessor = module.get<EmailProcessor>(EmailProcessor);
     webhookProcessor = module.get<WebhookProcessor>(WebhookProcessor);
+    dataCordProcessor = module.get<DataCordProcessor>(DataCordProcessor);
     factory = new HookProcessorFactory(moduleRef);
   });
 
@@ -99,6 +99,13 @@ describe('HookProcessorFactory', () => {
 
     const processor = factory.getProcessor(HookType.webhook);
     expect(processor).toBe(webhookProcessor);
+  });
+
+  it('should return an instance of DataCordProcesser for HookType.datacord', () => {
+    jest.spyOn(moduleRef, 'get').mockImplementation(() => dataCordProcessor);
+
+    const processor = factory.getProcessor(HookType.datacord);
+    expect(processor).toBe(dataCordProcessor);
   });
 
   it('should throw an error for unsupported hook types', () => {

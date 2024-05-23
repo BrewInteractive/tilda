@@ -1,21 +1,26 @@
 import { BullModule, getQueueToken } from '@nestjs/bull';
+import {
+  Constants,
+  EmailParams,
+  Hook,
+  HookType,
+  TildaManifest,
+  WebhookParams,
+} from '../models';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
-import { EmailParams, Hook, TildaManifest, WebhookParams } from '../models';
 import { EmailRequest, WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
 import Ajv from 'ajv';
 import { AxiosResponse } from 'axios';
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { HookProcessorFactory } from './../hook/hook.factory';
-import { HookService } from '../hook/hook.service';
 import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
-import { PreHookResponse } from './models';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 import { of } from 'rxjs';
 
@@ -34,13 +39,8 @@ describe('ManifestService', () => {
   let hookProcessorFactory: HookProcessorFactory;
   let webHookProcessor: WebhookProcessor;
   const queueMock = { add: jest.fn() };
-  let hookServiceMock: Partial<HookService>;
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         BullModule.registerQueue({
@@ -49,10 +49,6 @@ describe('ManifestService', () => {
       ],
       providers: [
         ManifestService,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HttpService,
           useValue: {
@@ -114,6 +110,23 @@ describe('ManifestService', () => {
     expect(manifestService.getManifestFromUrl).toHaveBeenCalledWith(
       manifestInput.url,
     );
+  });
+
+  it('should return manifest when Manifest is provided in manifestInput', async () => {
+    const mockTildaManifest = MockFactory(
+      TildaManifestFixture,
+    ).one() as TildaManifest;
+
+    // Arrange
+    const manifestInput = {
+      manifest: mockTildaManifest,
+    };
+
+    // Act
+    const actual = await manifestService.getManifest(manifestInput);
+
+    // Assert
+    expect(actual).toEqual(mockTildaManifest);
   });
 
   it('should call getManifestFromBase64 when base64 is provided in manifestInput', async () => {
@@ -251,6 +264,7 @@ describe('ManifestService', () => {
         headers: {},
         data: {},
       },
+      success: true,
     } as WebHookResponse;
 
     jest
@@ -263,7 +277,9 @@ describe('ManifestService', () => {
 
     const result = await manifestService.handlePreHooks(hooks, secretKey);
 
-    expect(result).toEqual([{ signature: mockHmacValue, ...mockResponse }]);
+    expect(result).toEqual([
+      { signature: mockHmacValue, ignoreSuccess: false, ...mockResponse },
+    ]);
     expect(hookProcessorFactory.getProcessor).toHaveBeenCalledWith(
       hooks[0].factory,
     );
@@ -281,6 +297,7 @@ describe('ManifestService', () => {
       signature: mockHmacValue,
       message:
         'The pre-hook request was not sent because the signatures are the same',
+      success: false,
     };
 
     const mockExecute = jest.fn();
@@ -338,7 +355,7 @@ describe('ManifestService', () => {
       MockFactory(TildaManifestFixture).one();
     (
       requiredPostHookInvalidEmailRegex.data.hooks.post[0].params as EmailParams
-    ).recipients[0]['email:enc'] = 'examplemail.com';
+    ).recipients[0][Constants.emailSuffix] = 'examplemail.com';
 
     test.each([
       [validManifest, true],
@@ -355,125 +372,16 @@ describe('ManifestService', () => {
     );
   });
 
-  it('should navigate to the specified property and return its value', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-        contact: {
-          email: faker.internet.email(),
-          phone: faker.phone.number(),
-        },
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBe(object.user.contact.email);
-  });
-
-  it('should return undefined for non-existent property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = 'user.contact.email';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBeUndefined();
-  });
-
-  it('should handle empty property path', () => {
-    const object = {
-      user: {
-        id: 1,
-        name: faker.person.fullName(),
-      },
-    };
-
-    const propertyPath = '';
-    const result = manifestService.navigateToObjectProperty(
-      object,
-      propertyPath,
-    );
-    expect(result).toBe(undefined);
-  });
-
-  it('should correctly process pre-hooks results and update success property based on the navigation path', () => {
-    const preHooksResults: PreHookResponse[] = [
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 1, value: 'test1', test: { success: true } },
-        },
-      },
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 2, value: 'test2', test: { success: false } },
-        },
-      },
-    ];
-    const manifest = {
-      hmac: '',
-      data: {
-        fields: {},
-        hooks: {
-          pre: [
-            { factory: 'webhook', params: { success: '$.test.success' } },
-            { factory: 'webhook', params: { success: '$.test.success' } },
-          ],
-        },
-      },
-    } as TildaManifest;
-
-    const expectedResults = [
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 1, value: 'test1', test: { success: true } },
-        },
-        success: true,
-      },
-      {
-        response: {
-          status: 200,
-          headers: {},
-          data: { id: 2, value: 'test2', test: { success: false } },
-        },
-        success: false,
-      },
-    ];
-
-    const newPreHooksResults = manifestService.processPreHooksResultsSuccess(
-      preHooksResults,
-      manifest,
-    );
-    console.log(newPreHooksResults);
-
-    expect(newPreHooksResults).toEqual(expectedResults);
-  });
-
   describe('Encryption Functions', () => {
     const validManifest = MockFactory(TildaManifestFixture).one();
     (validManifest.data.hooks.post[0].params as EmailParams).recipients[0][
-      'email:enc'
+      Constants.emailSuffix
     ] = TildaManifestFixture.getFirstRecipientEmail();
     validManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    validManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2Value();
+    validManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2Value();
 
     it('should encrypt email recipients in manifest', () => {
       const encryptedManifest = manifestService.encryptManifestEncFields(
@@ -482,10 +390,12 @@ describe('ManifestService', () => {
       );
 
       encryptedManifest.data.hooks.post.forEach((hook: any) => {
-        if (hook.factory === 'email') {
+        if (hook.factory === HookType.email) {
           const emailParams: any = hook.params;
           emailParams.recipients.forEach((recipient: any) => {
-            expect(recipient['email:enc']).not.toBe('example@mail.com');
+            expect(recipient[Constants.emailSuffix]).not.toBe(
+              'example@mail.com',
+            );
           });
         }
       });
@@ -498,8 +408,8 @@ describe('ManifestService', () => {
       );
 
       Object.values(encryptedManifest.data.fields).forEach((field: any) => {
-        if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).not.toBe(
+        if (field.const['constName2' + Constants.encryptSuffix]) {
+          expect(field.const['constName2' + Constants.encryptSuffix]).not.toBe(
             TildaManifestFixture.getConstName2Value(),
           );
         }
@@ -518,12 +428,13 @@ describe('ManifestService', () => {
       TildaManifestFixture.getEncryptedValidManifestHMAC();
     (
       encryptedValidManifest.data.hooks.post[0].params as EmailParams
-    ).recipients[0]['email:enc'] =
+    ).recipients[0][Constants.emailSuffix] =
       TildaManifestFixture.getFirstRecipientEncryptedEmail();
     encryptedValidManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    encryptedValidManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2EncValue();
+    encryptedValidManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2EncValue();
 
     it('should decrypt email recipients in manifest', () => {
       (decrypt as jest.Mock)
@@ -538,18 +449,18 @@ describe('ManifestService', () => {
       );
 
       decryptedManifest.data.hooks.post.forEach((hook: any) => {
-        if (hook.factory === 'email') {
+        if (hook.factory === HookType.email) {
           const emailParams: any = hook.params;
           emailParams.recipients.forEach((recipient: any) => {
-            expect(recipient['email:enc']).toBe(
+            expect(recipient[Constants.emailSuffix]).toBe(
               TildaManifestFixture.getFirstRecipientEmail(),
             );
           });
         }
       });
       Object.values(decryptedManifest.data.fields).forEach((field: any) => {
-        if (field.const['constName2:enc']) {
-          expect(field.const['constName2:enc']).toBe(
+        if (field.const['constName2' + Constants.encryptSuffix]) {
+          expect(field.const['constName2' + Constants.encryptSuffix]).toBe(
             TildaManifestFixture.getConstName2Value(),
           );
         }
@@ -567,8 +478,9 @@ describe('ManifestService', () => {
       TildaManifestFixture.setInputNameForName();
     validManifest.data.fields['name'].const['constName1'] =
       TildaManifestFixture.getConstName1Value();
-    validManifest.data.fields['surname'].const['constName2:enc'] =
-      TildaManifestFixture.getConstName2Value();
+    validManifest.data.fields['surname'].const[
+      'constName2' + Constants.encryptSuffix
+    ] = TildaManifestFixture.getConstName2Value();
     (validManifest.data.hooks.pre[0].params as WebhookParams).values =
       TildaManifestFixture.getWebhookValues();
 
@@ -589,7 +501,7 @@ describe('ManifestService', () => {
         name: name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 
@@ -639,7 +551,7 @@ describe('ManifestService', () => {
         name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 
@@ -667,7 +579,7 @@ describe('ManifestService', () => {
         name,
         'testName.const.constName1': TildaManifestFixture.getConstName1Value(),
         'name.const.constName1': TildaManifestFixture.getConstName1Value(),
-        'surname.const.constName2:enc':
+        ['surname.const.constName2' + Constants.encryptSuffix]:
           TildaManifestFixture.getConstName2Value(),
       };
 

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { ValidationModule } from './validation.module';
 import { ValidatorFactory } from './validator-factory';
 
@@ -20,6 +21,6 @@ describe('ValidationModule', () => {
   });
 
   it('should be defined', () => {
-    expect(ValidationModule).toBeDefined();
+    expect(validationModule).toBeDefined();
   });
 });

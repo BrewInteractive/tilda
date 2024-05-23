@@ -1,3 +1,5 @@
+import { Constants } from '../models';
+
 const TildaManifestSchema = {
   type: 'object',
   properties: {
@@ -58,7 +60,7 @@ const TildaManifestSchema = {
                 properties: {
                   factory: {
                     type: 'string',
-                    enum: ['webhook'],
+                    enum: ['webhook', 'datacord'],
                   },
                   params: {
                     type: 'object',
@@ -86,7 +88,23 @@ const TildaManifestSchema = {
                         },
                       },
                     },
-                    required: ['url', 'method'],
+                    if: {
+                      properties: { factory: { const: 'webhook' } },
+                    },
+                    then: {
+                      properties: {
+                        params: {
+                          required: ['url', 'method'],
+                        },
+                      },
+                    },
+                    else: {
+                      properties: {
+                        params: {
+                          required: ['url', 'values'],
+                        },
+                      },
+                    },
                   },
                 },
                 required: ['factory', 'params'],
@@ -109,13 +127,13 @@ const TildaManifestSchema = {
                         items: {
                           type: 'object',
                           properties: {
-                            'email:enc': {
+                            [Constants.emailSuffix]: {
                               type: 'string',
                               pattern:
                                 '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
                             },
                           },
-                          required: ['email:enc'],
+                          required: [Constants.emailSuffix],
                         },
                       },
                       url: {
@@ -170,6 +188,7 @@ const TildaManifestSchema = {
       required: ['fields', 'hooks'],
     },
   },
+  required: ['data'],
 };
 
 export default TildaManifestSchema;

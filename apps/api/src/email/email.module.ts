@@ -29,9 +29,8 @@ import { SmtpEmailService } from './providers/smtp-email.service';
         smtpEmailService: SmtpEmailService,
         configService: ConfigService,
       ) => {
-        const emailServiceType = configService.get(
-          'EMAIL_SERVICE',
-        ) as EmailServiceType;
+        const emailServiceType =
+          configService.get<EmailServiceType>('EMAIL_SERVICE');
 
         if (emailServiceType === EmailServiceType.SMTP) return smtpEmailService;
         else throw new Error('Invalid email service type');

@@ -1,15 +1,16 @@
 import { HookType } from '../../models';
 
 export class PreHookResponse {
-  success?: any;
+  success: boolean;
   signature?: string;
+  id: string;
   response?: {
     status: number;
     headers: any;
     data: any;
   };
-  data?: any;
   message?: string;
   factory?: HookType;
   params?: any;
+  ignoreSuccess: boolean;
 }

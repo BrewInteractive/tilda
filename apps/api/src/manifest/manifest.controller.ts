@@ -132,37 +132,34 @@ export class ManifestController {
       }
 
       this.manifestService.setWebhookParamsValues(manifestResponse, payload);
+
       const dataWithUi = this.manifestService.getDataWithUiLabels(
         manifestResponse,
         payload,
       );
+
       const manifestWithPreSignatures =
         this.manifestService.addSignatureToPreHooks(
           manifestResponse,
           prehookSignaturesArray,
         );
+
       const preHooksResults = await this.manifestService.handlePreHooks(
         manifestWithPreSignatures.data.hooks.pre,
         this.secretKey,
       );
 
-      const preHookResultsWithSuccess =
-        this.manifestService.processPreHooksResultsSuccess(
-          preHooksResults,
-          manifestWithPreSignatures,
-        );
+      const hasFailedPreHooks = preHooksResults?.some(
+        (hook) => !hook.success && !hook.ignoreSuccess,
+      );
 
-      if (
-        preHookResultsWithSuccess &&
-        preHookResultsWithSuccess.filter(
-          (hook) =>
-            (hook.success != undefined && !hook.success) ||
-            (hook.response && hook.response.status != 200),
-        ).length > 0
-      ) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
+      if (preHooksResults && hasFailedPreHooks) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          validationResult: {
+            success: false,
+          },
+          hook: { pre: preHooksResults },
+        });
       }
 
       manifestWithPreSignatures.data.hooks.post
@@ -175,9 +172,12 @@ export class ManifestController {
         manifestWithPreSignatures.data.hooks.post,
       );
 
-      return res
-        .status(HttpStatus.OK)
-        .json({ validationResult, hook: { pre: preHookResultsWithSuccess } });
+      return res.status(HttpStatus.OK).json({
+        validationResult: {
+          success: true,
+        },
+        hook: { pre: preHooksResults },
+      });
     } catch (error) {
       if (error instanceof HmacError) {
         return res

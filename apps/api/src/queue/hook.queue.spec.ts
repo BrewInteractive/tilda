@@ -1,36 +1,25 @@
+import { Constants, Hook, HookType } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { EmailProcessor } from '../hook/email.processor';
+import { EmailProcessor } from '../hook/processors/email.processor';
 import { EmailRequest } from '../hook/models';
-import { Hook } from '../models';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
-import { HookService } from '../hook/hook.service';
 import { MockFactory } from 'mockingbird';
 import { WebHookRequestFixture } from '../../test/fixtures';
-import { WebhookProcessor } from '../hook/webhook.processor';
+import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 
 describe('HookQueue', () => {
   let hookQueue: HookQueue;
-  let hookServiceMock: Partial<HookService>;
   let hookProcessorFactoryMock: HookProcessorFactory;
   let emailProcessorMock: EmailProcessor;
   let webHookProcessorMock: WebhookProcessor;
 
   beforeEach(async () => {
-    hookServiceMock = {
-      sendEmailAsync: jest.fn(),
-      sendWebhookAsync: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HookQueue,
-        {
-          provide: HookService,
-          useValue: hookServiceMock,
-        },
         {
           provide: HookProcessorFactory,
           useValue: {
@@ -63,14 +52,16 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'email',
+          id: faker.string.uuid(),
+          factory: HookType.email,
           params: {
             recipients: [
               {
-                'email:enc': faker.internet.email(),
+                [Constants.emailSuffix]: faker.internet.email(),
               },
             ],
           } as EmailRequest,
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };
@@ -90,11 +81,12 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'email',
+          id: faker.string.uuid(),
+          factory: HookType.email,
           params: {
             recipients: [
               {
-                'email:enc': faker.internet.email(),
+                [Constants.emailSuffix]: faker.internet.email(),
               },
             ],
             dataWithUi: {
@@ -103,6 +95,7 @@ describe('HookQueue', () => {
               surname: faker.person.lastName(),
             },
           },
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };
@@ -123,10 +116,12 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
-          factory: 'webhook',
+          id: faker.string.uuid(),
+          factory: HookType.webhook,
           params: {
             ...webHookParams,
           },
+          ignoreSuccess: false,
         },
       },
     } as { data: { hook: Hook } };
@@ -146,6 +141,7 @@ describe('HookQueue', () => {
     const job = {
       data: {
         hook: {
+          id: faker.string.uuid(),
           factory: 'wrong-factory',
           params: {},
         },

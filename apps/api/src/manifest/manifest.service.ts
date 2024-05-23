@@ -2,11 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import {
+  Constants,
   DataWithUiLabels,
   EmailParams,
   EmailRecipient,
   Field,
   Hook,
+  HookType,
   TildaManifest,
   WebhookParams,
 } from '../models';
@@ -45,7 +47,7 @@ export class ManifestService {
   ): Promise<PreHookResponse[]> {
     const preHookResult: PreHookResponse[] = [];
     for (const hook of hooks) {
-      const { signature, factory, params } = hook;
+      const { signature, factory, params, id, ignoreSuccess } = hook;
 
       let isHashValid = false;
       if (signature !== undefined && signature !== null && signature !== '') {
@@ -57,9 +59,18 @@ export class ManifestService {
           .getProcessor(factory)
           .execute(params);
         const newSignature = generateHmac({ factory, params }, secretKey);
-        preHookResult.push({ signature: newSignature, ...result });
+        preHookResult.push({
+          id,
+          ignoreSuccess,
+          signature: newSignature,
+          success: result?.success,
+          ...result,
+        });
       } else {
         preHookResult.push({
+          id,
+          ignoreSuccess,
+          success: false,
           message:
             'The pre-hook request was not sent because the signatures are the same',
           ...hook,
@@ -87,12 +98,22 @@ export class ManifestService {
   async getManifest(
     manifestInput: ManifestRequest,
   ): Promise<TildaManifest | null> {
-    if (!manifestInput.url && !manifestInput.base64) {
+    if (
+      !manifestInput.url &&
+      !manifestInput.base64 &&
+      !manifestInput.manifest
+    ) {
       throw new GetManifestError(`One of url or base64 should be provided`);
     }
-    return manifestInput.base64
-      ? await this.getManifestFromBase64(manifestInput.base64)
-      : await this.getManifestFromUrl(manifestInput.url);
+    let manifest: TildaManifest | null;
+    if (manifestInput.manifest) {
+      manifest = manifestInput.manifest;
+    } else if (manifestInput.base64) {
+      manifest = await this.getManifestFromBase64(manifestInput.base64);
+    } else {
+      manifest = await this.getManifestFromUrl(manifestInput.url);
+    }
+    return manifest;
   }
 
   async getManifestFromUrl(url: string): Promise<TildaManifest> {
@@ -127,14 +148,17 @@ export class ManifestService {
     secret: string,
   ): void => {
     emailRecipients.forEach((recipient) => {
-      recipient['email:enc'] = encrypt(recipient['email:enc'], secret);
+      recipient[Constants.emailSuffix] = encrypt(
+        recipient[Constants.emailSuffix],
+        secret,
+      );
     });
   };
 
   encryptFieldConstValues = (field: Field, secret: string): void => {
     Object.keys(field.const).forEach((constKey: string) => {
       const constValue = field.const[constKey];
-      if (constKey.endsWith(':enc')) {
+      if (constKey.endsWith(Constants.encryptSuffix)) {
         field.const[constKey] = encrypt(constValue, secret);
       }
     });
@@ -145,7 +169,7 @@ export class ManifestService {
     secret: string,
   ): TildaManifest => {
     manifest.data.hooks.post.forEach((hook: Hook) => {
-      if (hook.factory === 'email') {
+      if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.encryptManifestEmailRecipients(emailParams.recipients, secret);
       }
@@ -163,7 +187,10 @@ export class ManifestService {
     secret: string,
   ): void => {
     emailRecipients.forEach((recipient) => {
-      recipient['email:enc'] = decrypt(recipient['email:enc'], secret);
+      recipient[Constants.emailSuffix] = decrypt(
+        recipient[Constants.emailSuffix],
+        secret,
+      );
     });
   };
 
@@ -172,7 +199,7 @@ export class ManifestService {
     secret: string,
   ): TildaManifest => {
     manifest.data.hooks.post.forEach((hook: Hook) => {
-      if (hook.factory === 'email') {
+      if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.decryptManifestEmailRecipients(emailParams.recipients, secret);
       }
@@ -187,7 +214,7 @@ export class ManifestService {
   decryptFieldConstValues = (field: Field, secret: string): void => {
     Object.keys(field.const).forEach((constKey: string) => {
       const constValue = field.const[constKey];
-      if (constKey.endsWith(':enc')) {
+      if (constKey.endsWith(Constants.encryptSuffix)) {
         field.const[constKey] = decrypt(constValue, secret);
       }
     });
@@ -240,20 +267,25 @@ export class ManifestService {
     const valuesCopy = JSON.parse(JSON.stringify(values)) as {
       [key: string]: string;
     };
+    const regexPattern = `\\{(?:\\${Constants.prefixPattern})?fields\\.([^}]+)\\}`;
+    const fieldPlaceholderPattern = new RegExp(regexPattern);
+    const globalFieldPlaceholderPattern = new RegExp(regexPattern, 'g');
 
     Object.entries(valuesCopy).forEach(([key, value]) => {
       const originalValue = value;
-      const matches = originalValue.match(/\{(?:\$\.)?fields\.([^}]+)\}/g);
+      const matches = originalValue.match(globalFieldPlaceholderPattern);
+
       if (matches) {
         let transformedValue = originalValue;
         matches.forEach((match) => {
+          const fieldPattern = fieldPlaceholderPattern;
           const field = match
-            .replace(/\{(?:\$\.)?fields\.([^}]+)\}/, '$1')
+            .replace(fieldPattern, '$1')
             .replace('.value', '')
-            .replace(':enc', '');
+            .replace(Constants.encryptSuffix, '');
           transformedValue = transformedValue.replace(
             match,
-            output[field] || output[`${field}:enc`] || '',
+            output[field] || output[field + Constants.encryptSuffix] || '',
           );
         });
         transformedValues[key] = transformedValue;
@@ -272,10 +304,12 @@ export class ManifestService {
 
     const transformHookParamsValues = (hooks: Hook[]): void => {
       hooks.forEach((hook) => {
+        //TODO: it should not be necessary to check with the factory type. So new hook types should work without a change here.
         if (
-          hook.factory === 'webhook' &&
-          hook.params &&
-          (hook.params as WebhookParams).values
+          hook.factory === HookType.datacord ||
+          (hook.factory === HookType.webhook &&
+            hook.params &&
+            (hook.params as WebhookParams).values)
         ) {
           (hook.params as WebhookParams).values = this.transformPatternValues(
             (hook.params as WebhookParams).values,
@@ -312,40 +346,4 @@ export class ManifestService {
     }
     return dataWithUiLabels;
   };
-
-  navigateToObjectProperty(object, propertyPath: string) {
-    const parts = propertyPath.split('.');
-    let current = object;
-    for (const part of parts) {
-      if (current && Object.hasOwnProperty.call(current, part)) {
-        current = current[part];
-      } else {
-        return undefined;
-      }
-    }
-    return current;
-  }
-
-  processPreHooksResultsSuccess(
-    preHooksResults: PreHookResponse[],
-    manifest: TildaManifest,
-  ): PreHookResponse[] {
-    const newPreHooksResults = JSON.parse(JSON.stringify(preHooksResults));
-    newPreHooksResults.forEach((preHookResult, index) => {
-      const hook = manifest.data.hooks.pre[index];
-      const resultNavigation = (hook.params as WebhookParams).success;
-
-      if (resultNavigation) {
-        const navigationPath = resultNavigation.substring(2);
-        const result = this.navigateToObjectProperty(
-          preHookResult.response.data,
-          navigationPath,
-        );
-        if (result !== undefined) {
-          preHookResult.success = result;
-        }
-      }
-    });
-    return newPreHooksResults;
-  }
 }
