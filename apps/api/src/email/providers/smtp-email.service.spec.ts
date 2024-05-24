@@ -5,6 +5,7 @@ import { EmailFixture } from '../../../test/fixtures/email/email.fixture';
 import { MockFactory } from 'mockingbird';
 import * as nodemailer from 'nodemailer';
 import { faker } from '@faker-js/faker';
+import { Constants } from '../../models';
 
 jest.mock('nodemailer');
 const sendMailMock = jest.fn();
@@ -72,8 +73,8 @@ describe('SmtpEmailService', () => {
       host: faker.internet.url(),
       port: 587,
       secure: false,
-      "user:enc": faker.internet.email(),
-      "pass:enc": faker.internet.password(),
+      ['user' + Constants.encryptSuffix]: faker.internet.email(),
+      ['pass' + Constants.encryptSuffix]: faker.internet.password(),
     };
 
     const mockCreateTransport = nodemailer.createTransport as jest.Mock;
@@ -84,8 +85,8 @@ describe('SmtpEmailService', () => {
       port: 587,
       secure: false,
       auth: {
-        user: authLoginConfig['user:enc'],
-        pass: authLoginConfig['pass:enc'],
+        user: authLoginConfig['user' + Constants.encryptSuffix],
+        pass: authLoginConfig['pass' + Constants.encryptSuffix],
       },
     });
   });
