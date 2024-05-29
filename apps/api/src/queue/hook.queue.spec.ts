@@ -1,8 +1,7 @@
-import { Constants, Hook, HookType } from '../models';
+import { Constants, EmailParams, Hook, HookType } from '../models';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { EmailProcessor } from '../hook/processors/email.processor';
-import { EmailRequest } from '../hook/models';
 import { HookProcessorFactory } from '../hook/hook.factory';
 import { HookQueue } from './hook.queue';
 import { MockFactory } from 'mockingbird';
@@ -60,7 +59,7 @@ describe('HookQueue', () => {
                 [Constants.emailSuffix]: faker.internet.email(),
               },
             ],
-          } as EmailRequest,
+          } as EmailParams,
           ignoreSuccess: false,
         },
       },

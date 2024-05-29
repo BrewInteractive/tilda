@@ -22,8 +22,7 @@ import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ValidationService } from '../validation/validation.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DisableApiKey } from '../utils/decorators/disable-api-key/disable-api-key.decorator';
-import { EmailRequest } from '../hook/models';
-import { HookType } from '../models';
+import { EmailParams, HookType } from '../models';
 
 @ApiTags('manifest')
 @Controller('manifest')
@@ -165,7 +164,7 @@ export class ManifestController {
       manifestWithPreSignatures.data.hooks.post
         .filter((x) => x.factory === HookType.email)
         .forEach(async (hook) => {
-          (hook.params as EmailRequest).dataWithUi = dataWithUi;
+          (hook.params as EmailParams).dataWithUi = dataWithUi;
         });
 
       await this.manifestService.handlePostHooks(
