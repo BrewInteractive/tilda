@@ -101,6 +101,7 @@ Below is a sample manifest structure that demonstrates how to define form fields
             "factory": "email",
             "params": {
               "serviceType": "SMTP",
+              "subject": "Subject Name",
               "config": {
                 "from:enc": "example@mail.com",
                 "host:enc": "mail.example.com",

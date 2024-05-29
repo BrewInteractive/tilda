@@ -101,6 +101,7 @@ Aşağıda, form alanlarını nasıl tanımlayacağınızı, ön ve son işleme 
             "factory": "email",
             "params": {
               "serviceType": "SMTP",
+              "subject": "Subject Name"
               "config": {
                 "from:enc": "example@mail.com",
                 "host:enc": "mail.example.com",

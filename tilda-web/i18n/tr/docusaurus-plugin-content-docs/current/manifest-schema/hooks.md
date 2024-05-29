@@ -60,6 +60,7 @@ Bir email-hook nesnesi aşağıdaki özellikleri içerir:
 | `params → config → secure`        | Güvenli bir bağlantı (SSL/TLS) kullanılıp kullanılmayacağını belirten bir boolean değer. Güvenli bağlantılar için `true`, aksi halde `false`. | Evet      |
 | `params → config → user:enc`      | SMTP sunucusunda kimlik doğrulama için kullanılan kullanıcı adı. Bu değer şifrelenmiş olmalıdır.                           | Hayır       |
 | `params → config → pass:enc`      | SMTP sunucusunda kimlik doğrulama için kullanılan şifre. Bu değer de şifrelenmiş olmalıdır.                                | Hayır       |
+| `params → subject`             | Email Konusu                                                                                       | Hayır      |
 | `params → recipients`             | Alıcı nesnelerinden oluşan bir dizi.                                                                                       | Evet      |
 | `params → recipients → email:enc` | Alıcının e-posta adresi. Her bir e-posta adresi gizlilik ve güvenlik sağlamak için şifrelenmiş olmalıdır.                   | Evet      |
 

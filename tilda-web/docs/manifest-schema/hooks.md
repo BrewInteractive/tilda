@@ -61,6 +61,7 @@ A email-hook object contains properties such as:
 | `params → config → secure`        | A boolean value indicating whether to use a secure connection (SSL/TLS). `true` for secure connections, `false` otherwise. | Yes      |
 | `params → config → user:enc`      | The username for authenticating with the SMTP server. This should be encrypted.                                            | No       |
 | `params → config → pass:enc`      | The password for authenticating with the SMTP server. This should also be encrypted.                                       | No       |
+| `params → subject`             | The subject for email.                                                                                             | No      |
 | `params → recipients`             | An array of recipient objects.                                                                                             | Yes      |
 | `params → recipients → email:enc` | The email address of the recipient. Each email address should be encrypted to ensure privacy and security.                 | Yes      |
 
