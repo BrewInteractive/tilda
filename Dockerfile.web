@@ -1,0 +1,18 @@
+FROM node:alpine
+
+WORKDIR /usr/src/app
+
+COPY tilda-web ./
+
+RUN npm install --ignore-scripts
+
+RUN npm run build
+
+RUN addgroup --system nonroot \
+    && adduser --system nonroot --ingroup nonroot
+
+USER nonroot
+
+EXPOSE 3000
+
+CMD ["npm", "run", "serve"]

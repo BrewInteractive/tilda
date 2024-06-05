@@ -1,0 +1,8 @@
+{
+  "label": "Developments",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "This section provides information on how to set up and manage your local development environment for Tilda. It includes instructions for configuring environment variables and tips for efficient development workflows."
+  }
+}
