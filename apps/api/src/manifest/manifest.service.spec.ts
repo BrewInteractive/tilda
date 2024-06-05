@@ -8,7 +8,6 @@ import {
   WebhookParams,
 } from '../models';
 import { EmailHookFixture, WebHookFixture } from '../../test/fixtures';
-import { WebHookResponse } from '../hook/models';
 import { Test, TestingModule } from '@nestjs/testing';
 import { decrypt, generateHmac, verifyHmac } from '../utils/crypto-helpers';
 
@@ -20,6 +19,7 @@ import { HttpService } from '@nestjs/axios';
 import { ManifestService } from './manifest.service';
 import { MockFactory } from 'mockingbird';
 import { TildaManifestFixture } from '../../test/fixtures/manifest/tilda-manifest.fixture';
+import { WebHookResponse } from '../hook/models';
 import { WebhookProcessor } from '../hook/processors/webhook.processor';
 import { faker } from '@faker-js/faker';
 import { of } from 'rxjs';
@@ -618,7 +618,7 @@ describe('ManifestService', () => {
 
       expect(transformedPatternValues).toEqual(expectedValues);
     });
-    it('should generate the correct all key values with inputName', () => {
+    it('should generate only key values with ui.label', () => {
       const manifest = JSON.parse(
         JSON.stringify(validManifest),
       ) as TildaManifest;
@@ -628,10 +628,9 @@ describe('ManifestService', () => {
         surname,
         testName: name,
       };
-
+      delete manifest.data.fields['name'].ui.label;
       const expectedOutput = {
         [manifest.data.fields['surname'].ui.label]: surname,
-        [manifest.data.fields['name'].ui.label]: name,
       };
 
       const generatedKeyValues = manifestService.getDataWithUiLabels(

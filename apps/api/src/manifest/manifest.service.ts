@@ -181,7 +181,10 @@ export class ManifestService {
       if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.encryptManifestEmailRecipients(emailParams.recipients, secret);
-        this.encryptSmtpConfigValues((hook.params as EmailParams).config, secret);
+        this.encryptSmtpConfigValues(
+          (hook.params as EmailParams).config,
+          secret,
+        );
       }
     });
 
@@ -212,7 +215,10 @@ export class ManifestService {
       if (hook.factory === HookType.email) {
         const emailParams: EmailParams = hook.params as EmailParams;
         this.decryptManifestEmailRecipients(emailParams.recipients, secret);
-        this.decryptSmtpConfigValues((hook.params as EmailParams).config, secret);
+        this.decryptSmtpConfigValues(
+          (hook.params as EmailParams).config,
+          secret,
+        );
       }
     });
 
@@ -349,17 +355,12 @@ export class ManifestService {
     const dataWithUiLabels: DataWithUiLabels = {};
     for (const payloadName in payload) {
       for (const fieldKey in manifest.data.fields) {
-        if (manifest.data.fields.hasOwnProperty(fieldKey)) {
-          if (payloadName == fieldKey) {
-            dataWithUiLabels[manifest.data.fields[fieldKey].ui.label] =
-              payload[payloadName];
-            break;
+        const field = manifest.data.fields[fieldKey] as Field;
+        if (payloadName == fieldKey || field.inputName == payloadName) {
+          if (field.ui && field.ui.label) {
+            dataWithUiLabels[field.ui.label] = payload[payloadName];
           }
-          if (manifest.data.fields[fieldKey].inputName == payloadName) {
-            dataWithUiLabels[manifest.data.fields[fieldKey].ui.label] =
-              payload[payloadName];
-            break;
-          }
+          break;
         }
       }
     }
