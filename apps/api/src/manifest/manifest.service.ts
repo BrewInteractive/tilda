@@ -355,9 +355,9 @@ export class ManifestService {
     const dataWithUiLabels: DataWithUiLabels = {};
     for (const payloadName in payload) {
       for (const fieldKey in manifest.data.fields) {
-        const field = manifest.data.fields[fieldKey] as Field;
+        const field = manifest.data.fields[fieldKey];
         if (payloadName == fieldKey || field.inputName == payloadName) {
-          if (field.ui && field.ui.label) {
+          if (field?.ui?.label) {
             dataWithUiLabels[field.ui.label] = payload[payloadName];
           }
           break;
