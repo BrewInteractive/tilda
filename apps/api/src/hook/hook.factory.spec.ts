@@ -23,10 +23,8 @@ describe('HookProcessorFactory', () => {
       host: faker.internet.url(),
       port: faker.number.int(),
       secure: faker.datatype.boolean(),
-      auth: {
-        user: faker.internet.email(),
-        pass: faker.internet.password(),
-      },
+      user: faker.internet.email(),
+      pass: faker.internet.password(),
     } as SmtpEmailConfig;
     const module = await Test.createTestingModule({
       providers: [

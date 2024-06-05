@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.3](https://github.com/BrewInteractive/tilda/compare/v1.0.2...v1.0.3) (2024-05-29)
+
+
+### Bug Fixes
+
+* fix email subject in email processor test ([a7dd63b](https://github.com/BrewInteractive/tilda/commit/a7dd63bf005836e9a9efc9eb44fabd283ac47e8a))
+
+### [1.0.2](https://github.com/BrewInteractive/tilda/compare/v1.0.1...v1.0.2) (2024-05-23)
+
 ### [1.0.1](https://github.com/BrewInteractive/tilda/compare/v1.0.0...v1.0.1) (2024-05-03)
 
 ## 1.0.0 (2024-04-30)

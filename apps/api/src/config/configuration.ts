@@ -12,17 +12,7 @@ export default () => ({
         process.env.REDIS_REJECT_UNAUTHORIZED === 'true' || false,
     },
   },
-  SMTP: {
-    HOST: process.env.SMTP_HOST,
-    PORT: process.env.SMTP_PORT,
-    SECURE: process.env.SMTP_SECURE === 'true' || false,
-    AUTH: {
-      USER: process.env.SMTP_AUTH_USER,
-      PASS: process.env.SMTP_AUTH_PASS,
-    },
-  },
-  EMAIL_FROM: process.env.EMAIL_FROM,
-  EMAIL_SERVICE: process.env.EMAIL_SERVICE,
+  EMAIL_SUBJECT: process.env.EMAIL_SUBJECT,
   API_KEY: process.env.API_KEY,
   CORS_CONFIG: {
     origin: process.env.ALLOWED_ORIGINS

@@ -4,7 +4,7 @@ import { Mock } from 'mockingbird';
 import { WebHookRequestFixture } from '../hook/web-hook-request.fixture';
 import { faker } from '@faker-js/faker';
 
-class EmailRequestFixture {
+class EmailParamsFixture {
   @Mock({
     type: Array,
     count: 1,
@@ -36,8 +36,8 @@ export class EmailHookFixture implements Hook {
   @Mock(() => HookType.email)
   factory: HookType;
 
-  @Mock(EmailRequestFixture)
-  params: EmailRequestFixture;
+  @Mock(EmailParamsFixture)
+  params: EmailParamsFixture;
 
   @Mock(() => false)
   ignoreSuccess: boolean;

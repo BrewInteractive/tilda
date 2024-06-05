@@ -59,10 +59,8 @@ describe('ManifestController', () => {
       host: faker.internet.url(),
       port: faker.number.int(),
       secure: faker.datatype.boolean(),
-      auth: {
-        user: faker.internet.email(),
-        pass: faker.internet.password(),
-      },
+      user: faker.internet.email(),
+      pass: faker.internet.password(),
     } as SmtpEmailConfig;
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ManifestController],
@@ -527,7 +525,7 @@ describe('ManifestController', () => {
     const validationResult = [
       {
         path: '#/properties/name/pattern',
-        message: 'must match pattern "^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]+$"',
+        message: 'must match pattern "^[a-zA-Z\\sçÇğĞıİöÖşŞüÜ]*$"',
       },
     ];
     jest.spyOn(validationService, 'validate').mockReturnValue({
