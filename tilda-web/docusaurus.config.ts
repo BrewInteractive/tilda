@@ -67,6 +67,11 @@ const config: Config = {
           position: 'right',
         },
         {
+          href: '/generator',
+          label: 'Generator',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/BrewInteractive/tilda',
           label: 'GitHub',
           position: 'right',
