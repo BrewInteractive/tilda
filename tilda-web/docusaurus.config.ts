@@ -67,7 +67,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: '/generator',
+          href: 'https://tilda.run/generator',
           label: 'Generator',
           position: 'left',
         },
