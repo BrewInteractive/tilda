@@ -48,6 +48,11 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
+    docs: {
+      sidebar: {
+        hideable: true,
+      },
+    },
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
       title: 'Tilda',
@@ -67,9 +72,9 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://tilda.run/generator',
-          label: 'Generator',
+          href: '/generator',
           position: 'left',
+          label: 'Generator',
         },
         {
           href: 'https://github.com/BrewInteractive/tilda',

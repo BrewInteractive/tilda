@@ -1,0 +1,60 @@
+{
+  "manifest": {
+    "data": {
+      "fields": {
+        "firstName": {
+          "inputName": "first_name",
+          "ui": {
+            "label": "First Name"
+          },
+          "const": {},
+          "validators": [
+            {
+              "factory": "alpha"
+            }
+          ]
+        },
+        "lastName": {
+          "inputName": "last_name",
+          "ui": {
+            "label": "Last Name"
+          },
+          "const": {},
+          "validators": [
+            {
+              "factory": "alpha"
+            }
+          ]
+        },
+        "citizenId": {
+          "inputName": "citizen_id",
+          "ui": {
+            "label": "Citizen ID"
+          },
+          "const": {
+            "taxId:enc": "1234567890"
+          },
+          "validators": [
+            {
+              "factory": "regex",
+              "value": "^[1-9]{1}[0-9]{9}[02468]{1}$",
+              "onMatch": "pass"
+            }
+          ]
+        },
+        "age": {
+          "inputName": "age",
+          "ui": {
+            "label": "Age"
+          },
+          "const": {},
+          "validators": [
+            {
+              "factory": "numeric"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
